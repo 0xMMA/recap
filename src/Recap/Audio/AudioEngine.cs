@@ -175,6 +175,7 @@ public class AudioEngine : IDisposable
     // PCM splicing
     public static void SpliceSegments(IEnumerable<string> files, string outputPath)
     {
+        Directory.CreateDirectory(Path.GetDirectoryName(outputPath)!);
         using var writer = new WaveFileWriter(outputPath, CaptureFormat);
         foreach (var file in files)
         {

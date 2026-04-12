@@ -477,11 +477,18 @@ public class TuiHost
     private void PlaySpliced()
     {
         if (_state.Segments.Count == 0) return;
-        var splicedPath = Path.Combine(TempDir, "_spliced.wav");
-        AudioEngine.SpliceSegments(_state.Segments.Select(s => s.FilePath), splicedPath);
-        _audio.Play(splicedPath);
-        _state.Mode = AppMode.Playing;
-        _state.LastActionResult = "Playing all segments";
+        try
+        {
+            var splicedPath = Path.Combine(TempDir, "_spliced.wav");
+            AudioEngine.SpliceSegments(_state.Segments.Select(s => s.FilePath), splicedPath);
+            _audio.Play(splicedPath);
+            _state.Mode = AppMode.Playing;
+            _state.LastActionResult = "Playing all segments";
+        }
+        catch (Exception ex)
+        {
+            _state.LastActionResult = $"Playback failed: {ex.Message}";
+        }
     }
 
     private async Task TranscribeAsync()
