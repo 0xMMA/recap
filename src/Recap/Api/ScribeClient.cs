@@ -36,9 +36,28 @@ public class ScribeClient
         request.Content = content;
 
         var response = await _http.SendAsync(request, ct);
-        response.EnsureSuccessStatusCode();
-
         var json = await response.Content.ReadAsStringAsync(ct);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            // Parse API error detail if available
+            string detail = $"{(int)response.StatusCode} {response.StatusCode}";
+            try
+            {
+                using var errDoc = JsonDocument.Parse(json);
+                if (errDoc.RootElement.TryGetProperty("detail", out var d))
+                    detail += $": {d}";
+                else
+                    detail += $": {json}";
+            }
+            catch
+            {
+                if (!string.IsNullOrWhiteSpace(json))
+                    detail += $": {json}";
+            }
+            throw new HttpRequestException(detail);
+        }
+
         using var doc = JsonDocument.Parse(json);
         return doc.RootElement.GetProperty("text").GetString() ?? string.Empty;
     }
