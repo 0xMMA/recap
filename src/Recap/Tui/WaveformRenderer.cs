@@ -1,8 +1,14 @@
+using System.Collections.Concurrent;
+
 namespace Recap.Tui;
 
 public static class WaveformRenderer
 {
     private static readonly char[] Bars = { ' ', '▁', '▂', '▃', '▄', '▅', '▆', '▇', '█' };
+
+    private static readonly ConcurrentDictionary<string, CacheEntry> _cache = new();
+
+    private record CacheEntry(string Sparkline, long FileSize, DateTime LastModified, int Width);
 
     public static string Render(float[] peaks, int width)
     {
@@ -16,10 +22,52 @@ public static class WaveformRenderer
         return new string(chars);
     }
 
-    public static string RenderSegment(string filePath, int width)
+    public static string GetOrRenderSegment(string filePath, int width)
     {
-        // Read WAV and generate sparkline — open with FileShare.ReadWrite
-        // so we never block recording or other readers
+        if (_cache.TryGetValue(filePath, out var cached) && cached.Width == width)
+        {
+            // Validate cache — file unchanged
+            try
+            {
+                var info = new FileInfo(filePath);
+                if (info.Exists && info.Length == cached.FileSize && info.LastWriteTimeUtc == cached.LastModified)
+                    return cached.Sparkline;
+            }
+            catch
+            {
+                return cached.Sparkline; // Can't stat file, use stale cache
+            }
+        }
+
+        // Cache miss or stale — render fresh
+        var sparkline = RenderSegmentFromDisk(filePath, width);
+
+        try
+        {
+            var info = new FileInfo(filePath);
+            if (info.Exists)
+                _cache[filePath] = new CacheEntry(sparkline, info.Length, info.LastWriteTimeUtc, width);
+        }
+        catch { }
+
+        return sparkline;
+    }
+
+    public static void InvalidateCache(string filePath)
+    {
+        _cache.TryRemove(filePath, out _);
+    }
+
+    public static void ClearCache()
+    {
+        _cache.Clear();
+    }
+
+    // Keep original method for direct use in tests / one-shot rendering
+    public static string RenderSegment(string filePath, int width) => RenderSegmentFromDisk(filePath, width);
+
+    private static string RenderSegmentFromDisk(string filePath, int width)
+    {
         try
         {
             using var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);

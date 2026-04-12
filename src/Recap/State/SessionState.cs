@@ -28,6 +28,7 @@ public class SessionState
     public string ActiveLanguage { get; set; } = "de";
     public string? LastActionResult { get; set; }
     public string? TranscriptText { get; set; }
+    public int ResultScrollOffset { get; set; }
 
     public (int Start, int End) GetSelectionRange()
     {
@@ -42,6 +43,7 @@ public class SessionState
     public void AddSegment(Segment segment)
     {
         segment.Index = _segments.Count;
+        segment.RefreshHasFile();
         _segments.Add(segment);
         _selectedIndex = _segments.Count - 1;
         _selectionAnchor = -1;
@@ -119,6 +121,7 @@ public class SessionState
         IsDirty = false;
         TranscriptText = null;
         LastActionResult = null;
+        ResultScrollOffset = 0;
     }
 
     public Segment? GetSelected()

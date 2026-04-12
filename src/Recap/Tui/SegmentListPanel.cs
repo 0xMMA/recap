@@ -42,13 +42,24 @@ public class SegmentListPanel : IRenderable
             var prefix = selected ? "[bold green]>[/] " : "  ";
             var style = selected ? "bold" : "dim";
 
-            var sparkline = WaveformRenderer.RenderSegment(seg.FilePath, SparklineWidth);
-
-            table.AddRow(
-                new Markup($"{prefix}[{style}]{seg.Index + 1:D2}[/]"),
-                new Markup($"[{style}]{seg.Duration:mm\\:ss\\.f}[/]"),
-                new Markup($"[cyan]{Markup.Escape(sparkline)}[/]")
-            );
+            if (!seg.HasFile)
+            {
+                var dots = new string('·', SparklineWidth);
+                table.AddRow(
+                    new Markup($"{prefix}[{style}]{seg.Index + 1:D2}[/]"),
+                    new Markup($"[red]⚠ {seg.Duration:mm\\:ss\\.f}[/]"),
+                    new Markup($"[red]{dots}[/]")
+                );
+            }
+            else
+            {
+                var sparkline = WaveformRenderer.GetOrRenderSegment(seg.FilePath, SparklineWidth);
+                table.AddRow(
+                    new Markup($"{prefix}[{style}]{seg.Index + 1:D2}[/]"),
+                    new Markup($"[{style}]{seg.Duration:mm\\:ss\\.f}[/]"),
+                    new Markup($"[cyan]{Markup.Escape(sparkline)}[/]")
+                );
+            }
         }
 
         return ((IRenderable)table).Render(options, maxWidth);

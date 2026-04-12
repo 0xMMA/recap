@@ -144,7 +144,11 @@ public class TuiHost
             {
                 var trimMode = new TrimMode(_state);
                 if (trimMode.Run(seg))
+                {
+                    WaveformRenderer.InvalidateCache(seg.FilePath);
+                    seg.RefreshHasFile();
                     _state.LastActionResult = $"Trimmed segment {seg.Index + 1}";
+                }
                 else
                     _state.LastActionResult = "Trim cancelled";
             }
@@ -166,6 +170,8 @@ public class TuiHost
                     File.Move(result.OutputPath, seg.FilePath);
                     using var reader = new NAudio.Wave.WaveFileReader(seg.FilePath);
                     seg.Duration = reader.TotalTime;
+                    WaveformRenderer.InvalidateCache(seg.FilePath);
+                    seg.RefreshHasFile();
                     trimmed++;
                 }
                 else
@@ -271,10 +277,7 @@ public class TuiHost
     {
         if (_state.Mode == AppMode.ResultView && _state.TranscriptText != null)
         {
-            return new Markup(
-                $"[bold]Transcript:[/]\n\n{Markup.Escape(_state.TranscriptText)}\n\n" +
-                "[grey]C[/] Copy │ [grey]Enter[/] Actions │ [grey]Esc[/] Back"
-            );
+            return RenderScrollableResult();
         }
 
         return new Markup(
@@ -283,9 +286,50 @@ public class TuiHost
             "[grey]Ctrl+Z[/] Undo  │  [grey]Ctrl+A[/] Select all  │  [grey]Shift+↑/↓[/] Multi-select\n" +
             "[grey]Enter[/] Play segment  │  [grey]Shift+Enter[/] Play all\n" +
             "[grey]Space[/] Pause  │  [grey]S[/] Save  │  [grey]X[/] Transcribe  │  [grey]Shift+X[/] Transcribe all\n" +
-            "[grey]T[/] Trim  │  [grey]A[/] Auto-trim  │  [grey]L[/] Language\n" +
+            "[grey]T[/] Trim  │  [grey]A[/] Auto-trim  │  [grey]L[/] Language  │  [grey]F[/] Explorer\n" +
             "[grey]N[/] New session  │  [grey]U[/] Update  │  [grey]Ctrl+,[/] Settings  │  [grey]Q[/] Quit"
         );
+    }
+
+    private IRenderable RenderScrollableResult()
+    {
+        var lines = _state.TranscriptText!.Split('\n');
+
+        // Compute visible height: console height minus layout overhead
+        int consoleHeight;
+        try { consoleHeight = Console.WindowHeight; }
+        catch { consoleHeight = 30; }
+
+        // Layout overhead: Main panel borders (2) + header (1) + Waveform (3) + StatusBar (1) + header/footer padding (4)
+        const int overhead = 14;
+        var visibleLines = Math.Max(3, consoleHeight - overhead);
+
+        // Reserve 1 line for footer, 1 for possible scroll indicator each direction
+        var contentLines = visibleLines - 3;
+        if (contentLines < 1) contentLines = 1;
+
+        var maxOffset = Math.Max(0, lines.Length - contentLines);
+        _state.ResultScrollOffset = Math.Clamp(_state.ResultScrollOffset, 0, maxOffset);
+
+        var visible = lines.Skip(_state.ResultScrollOffset).Take(contentLines);
+        var parts = new List<string>();
+
+        // Top scroll indicator
+        if (_state.ResultScrollOffset > 0)
+            parts.Add($"[grey]▲ {_state.ResultScrollOffset} more line(s) above[/]");
+
+        parts.Add("[bold]Transcript:[/]\n");
+        parts.Add(Markup.Escape(string.Join("\n", visible)));
+
+        // Bottom scroll indicator
+        var remaining = lines.Length - _state.ResultScrollOffset - contentLines;
+        if (remaining > 0)
+            parts.Add($"\n[grey]▼ {remaining} more line(s) below[/]");
+
+        // Footer — always visible
+        parts.Add("\n[grey]↑/↓[/] Scroll │ [grey]C[/] Copy │ [grey]Enter[/] Actions │ [grey]Esc[/] Back");
+
+        return new Markup(string.Join("\n", parts));
     }
 
     private async Task HandleKeyAsync(ConsoleKeyInfo key)
@@ -382,6 +426,10 @@ public class TuiHost
                 CycleLanguage();
                 break;
 
+            case ConsoleKey.F:
+                OpenInExplorer();
+                break;
+
             case ConsoleKey.N:
                 _pendingNewSession = true;
                 break;
@@ -405,6 +453,30 @@ public class TuiHost
     {
         switch (key.Key)
         {
+            case ConsoleKey.UpArrow:
+                _state.ResultScrollOffset--;
+                break;
+
+            case ConsoleKey.DownArrow:
+                _state.ResultScrollOffset++;
+                break;
+
+            case ConsoleKey.PageUp:
+                _state.ResultScrollOffset -= 10;
+                break;
+
+            case ConsoleKey.PageDown:
+                _state.ResultScrollOffset += 10;
+                break;
+
+            case ConsoleKey.Home:
+                _state.ResultScrollOffset = 0;
+                break;
+
+            case ConsoleKey.End:
+                _state.ResultScrollOffset = int.MaxValue; // clamped during render
+                break;
+
             case ConsoleKey.C:
                 if (_state.TranscriptText != null)
                 {
@@ -420,6 +492,7 @@ public class TuiHost
             case ConsoleKey.Escape:
                 _state.Mode = AppMode.Normal;
                 _state.TranscriptText = null;
+                _state.ResultScrollOffset = 0;
                 break;
         }
     }
@@ -469,6 +542,11 @@ public class TuiHost
     {
         var seg = _state.GetSelected();
         if (seg == null) return;
+        if (!seg.HasFile)
+        {
+            _state.LastActionResult = "File missing — cannot play";
+            return;
+        }
         _audio.Play(seg.FilePath);
         _state.Mode = AppMode.Playing;
         _state.LastActionResult = $"Playing segment {seg.Index + 1}";
@@ -477,13 +555,22 @@ public class TuiHost
     private void PlaySpliced()
     {
         if (_state.Segments.Count == 0) return;
+        var valid = _state.Segments.Where(s => s.HasFile).ToList();
+        if (valid.Count == 0)
+        {
+            _state.LastActionResult = "No valid segment files to play";
+            return;
+        }
         try
         {
+            var skipped = _state.Segments.Count - valid.Count;
             var splicedPath = Path.Combine(TempDir, "_spliced.wav");
-            AudioEngine.SpliceSegments(_state.Segments.Select(s => s.FilePath), splicedPath);
+            AudioEngine.SpliceSegments(valid.Select(s => s.FilePath), splicedPath);
             _audio.Play(splicedPath);
             _state.Mode = AppMode.Playing;
-            _state.LastActionResult = "Playing all segments";
+            _state.LastActionResult = skipped > 0
+                ? $"Playing {valid.Count} segments ({skipped} skipped — missing)"
+                : "Playing all segments";
         }
         catch (Exception ex)
         {
@@ -499,17 +586,24 @@ public class TuiHost
             return;
         }
 
-        var segments = _state.GetSelectedSegments();
+        var segments = _state.GetSelectedSegments().Where(s => s.HasFile).ToList();
         if (segments.Count == 0 && _state.Segments.Count > 0)
         {
+            // No selection — splice all valid segments
+            var valid = _state.Segments.Where(s => s.HasFile).ToList();
+            if (valid.Count == 0)
+            {
+                _state.LastActionResult = "No valid segment files to transcribe";
+                return;
+            }
             var splicedPath = Path.Combine(TempDir, "_transcribe.wav");
-            AudioEngine.SpliceSegments(_state.Segments.Select(s => s.FilePath), splicedPath);
+            AudioEngine.SpliceSegments(valid.Select(s => s.FilePath), splicedPath);
             segments = new() { new Models.Segment { FilePath = splicedPath } };
         }
 
         if (segments.Count == 0)
         {
-            _state.LastActionResult = "No segments to transcribe";
+            _state.LastActionResult = "No valid segment files to transcribe";
             return;
         }
 
@@ -526,8 +620,9 @@ public class TuiHost
                 results.Add(text);
             }
 
-            _state.TranscriptText = string.Join("\n\n---\n\n", results);
+            _state.TranscriptText = string.Join("\n\n", results);
             _state.Mode = AppMode.ResultView;
+            _state.ResultScrollOffset = 0;
             _state.LastActionResult = "Transcription complete";
         }
         catch (Exception ex)
@@ -544,28 +639,56 @@ public class TuiHost
             return;
         }
 
-        if (_state.Segments.Count == 0)
+        var valid = _state.Segments.Where(s => s.HasFile).ToList();
+        if (valid.Count == 0)
         {
-            _state.LastActionResult = "No segments to transcribe";
+            _state.LastActionResult = "No valid segment files to transcribe";
             return;
         }
 
-        _state.LastActionResult = "Transcribing all segments...";
+        var skipped = _state.Segments.Count - valid.Count;
+        _state.LastActionResult = skipped > 0
+            ? $"Transcribing {valid.Count} segments ({skipped} skipped — missing)..."
+            : "Transcribing all segments...";
 
         try
         {
             var lang = _state.ActiveLanguage == "auto" ? null : _state.ActiveLanguage;
             var splicedPath = Path.Combine(TempDir, "_transcribe_all.wav");
-            AudioEngine.SpliceSegments(_state.Segments.Select(s => s.FilePath), splicedPath);
+            AudioEngine.SpliceSegments(valid.Select(s => s.FilePath), splicedPath);
             var text = await _scribe.TranscribeAsync(splicedPath, lang, _config.AudioEvents);
 
             _state.TranscriptText = text;
             _state.Mode = AppMode.ResultView;
-            _state.LastActionResult = $"Transcribed all {_state.Segments.Count} segments";
+            _state.ResultScrollOffset = 0;
+            _state.LastActionResult = $"Transcribed all {valid.Count} segments";
         }
         catch (Exception ex)
         {
             _state.LastActionResult = $"Transcribe failed: {ex.Message}";
+        }
+    }
+
+    private void OpenInExplorer()
+    {
+        try
+        {
+            var seg = _state.GetSelected();
+            if (seg != null && seg.HasFile)
+            {
+                System.Diagnostics.Process.Start("explorer.exe", $"/select,\"{seg.FilePath}\"");
+                _state.LastActionResult = "Opened in Explorer";
+            }
+            else
+            {
+                Directory.CreateDirectory(TempDir);
+                System.Diagnostics.Process.Start("explorer.exe", TempDir);
+                _state.LastActionResult = "Opened session folder";
+            }
+        }
+        catch (Exception ex)
+        {
+            _state.LastActionResult = $"Explorer failed: {ex.Message}";
         }
     }
 
