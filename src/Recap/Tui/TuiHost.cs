@@ -429,12 +429,21 @@ public class TuiHost
 
     private void StartRecording()
     {
-        var segIndex = _state.Segments.Count;
-        var path = Path.Combine(TempDir, $"{segIndex:D4}.wav");
-        _audio.StartRecording(path);
-        _state.RecordingState = RecordingState.Recording;
-        _state.Mode = AppMode.Recording;
-        _state.LastActionResult = "Recording...";
+        // Use timestamp-based name to avoid collisions after segment deletes
+        var name = DateTime.Now.ToString("HHmmss-fff");
+        var path = Path.Combine(TempDir, $"{name}.wav");
+
+        try
+        {
+            _audio.StartRecording(path);
+            _state.RecordingState = RecordingState.Recording;
+            _state.Mode = AppMode.Recording;
+            _state.LastActionResult = "Recording...";
+        }
+        catch (IOException ex)
+        {
+            _state.LastActionResult = $"Cannot start recording: {ex.Message}";
+        }
     }
 
     private void StopRecording()

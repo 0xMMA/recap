@@ -18,10 +18,12 @@ public static class WaveformRenderer
 
     public static string RenderSegment(string filePath, int width)
     {
-        // Read WAV and generate sparkline
+        // Read WAV and generate sparkline — open with FileShare.ReadWrite
+        // so we never block recording or other readers
         try
         {
-            using var reader = new NAudio.Wave.WaveFileReader(filePath);
+            using var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+            using var reader = new NAudio.Wave.WaveFileReader(stream);
             var samples = new List<float>();
             var buffer = new byte[2];
             while (reader.Read(buffer, 0, 2) == 2)

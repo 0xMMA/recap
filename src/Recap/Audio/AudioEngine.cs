@@ -30,7 +30,25 @@ public class AudioEngine : IDisposable
 
         Directory.CreateDirectory(Path.GetDirectoryName(outputPath)!);
         _currentFile = outputPath;
-        _writer = new WaveFileWriter(outputPath, CaptureFormat);
+
+        // Retry up to 3 times with short delay — handles antivirus file locks
+        IOException? lastEx = null;
+        for (int attempt = 0; attempt < 3; attempt++)
+        {
+            try
+            {
+                _writer = new WaveFileWriter(outputPath, CaptureFormat);
+                lastEx = null;
+                break;
+            }
+            catch (IOException ex)
+            {
+                lastEx = ex;
+                Thread.Sleep(100);
+            }
+        }
+        if (lastEx != null) throw lastEx;
+
         _recordStart = DateTime.Now;
 
         _waveIn = new WaveInEvent
@@ -118,7 +136,8 @@ public class AudioEngine : IDisposable
 
     // Playback
     private WaveOutEvent? _waveOut;
-    private AudioFileReader? _playbackReader;
+    private WaveFileReader? _playbackReader;
+    private FileStream? _playbackStream;
 
     public bool IsPlaying => _waveOut?.PlaybackState == PlaybackState.Playing;
     public bool IsPaused => _waveOut?.PlaybackState == PlaybackState.Paused;
@@ -126,7 +145,8 @@ public class AudioEngine : IDisposable
     public void Play(string filePath)
     {
         StopPlayback();
-        _playbackReader = new AudioFileReader(filePath);
+        _playbackStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+        _playbackReader = new WaveFileReader(_playbackStream);
         _waveOut = new WaveOutEvent();
         _waveOut.Init(_playbackReader);
         _waveOut.Play();
@@ -148,6 +168,8 @@ public class AudioEngine : IDisposable
         _waveOut = null;
         _playbackReader?.Dispose();
         _playbackReader = null;
+        _playbackStream?.Dispose();
+        _playbackStream = null;
     }
 
     // PCM splicing
@@ -156,7 +178,8 @@ public class AudioEngine : IDisposable
         using var writer = new WaveFileWriter(outputPath, CaptureFormat);
         foreach (var file in files)
         {
-            using var reader = new WaveFileReader(file);
+            using var stream = new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+            using var reader = new WaveFileReader(stream);
             var buffer = new byte[reader.Length];
             int read = reader.Read(buffer, 0, buffer.Length);
             writer.Write(buffer, 0, read);
