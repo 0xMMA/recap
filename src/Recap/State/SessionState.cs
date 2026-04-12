@@ -102,6 +102,13 @@ public class SessionState
         SelectedIndex += delta;
     }
 
+    public void SelectAll()
+    {
+        if (_segments.Count == 0) return;
+        _selectionAnchor = 0;
+        _selectedIndex = _segments.Count - 1;
+    }
+
     public void Clear()
     {
         _segments.Clear();

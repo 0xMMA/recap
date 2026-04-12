@@ -174,6 +174,20 @@ public class SessionStateTests
     }
 
     [Fact]
+    public void SelectAll_SelectsEntireRange()
+    {
+        var state = new SessionState();
+        state.AddSegment(MakeSegment("a.wav"));
+        state.AddSegment(MakeSegment("b.wav"));
+        state.AddSegment(MakeSegment("c.wav"));
+        state.SelectAll();
+        var (start, end) = state.GetSelectionRange();
+        start.ShouldBe(0);
+        end.ShouldBe(2);
+        state.GetSelectedSegments().Count.ShouldBe(3);
+    }
+
+    [Fact]
     public void TotalDuration_SumsAllSegments()
     {
         var state = new SessionState();

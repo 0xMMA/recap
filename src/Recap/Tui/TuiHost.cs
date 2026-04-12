@@ -280,9 +280,9 @@ public class TuiHost
         return new Markup(
             "[bold]Keybinds:[/]\n\n" +
             "[grey]R[/] Record/Stop  │  [grey]↑/↓[/] Navigate  │  [grey]Del[/] Delete\n" +
-            "[grey]Ctrl+Z[/] Undo  │  [grey]Shift+↑/↓[/] Multi-select\n" +
+            "[grey]Ctrl+Z[/] Undo  │  [grey]Ctrl+A[/] Select all  │  [grey]Shift+↑/↓[/] Multi-select\n" +
             "[grey]Enter[/] Play segment  │  [grey]Shift+Enter[/] Play all\n" +
-            "[grey]Space[/] Pause  │  [grey]S[/] Save  │  [grey]X[/] Transcribe\n" +
+            "[grey]Space[/] Pause  │  [grey]S[/] Save  │  [grey]X[/] Transcribe  │  [grey]Shift+X[/] Transcribe all\n" +
             "[grey]T[/] Trim  │  [grey]A[/] Auto-trim  │  [grey]L[/] Language\n" +
             "[grey]N[/] New session  │  [grey]U[/] Update  │  [grey]Ctrl+,[/] Settings  │  [grey]Q[/] Quit"
         );
@@ -357,8 +357,17 @@ public class TuiHost
                 _pendingSave = true;
                 break;
 
+            case ConsoleKey.X when key.Modifiers.HasFlag(ConsoleModifiers.Shift):
+                await TranscribeAllAsync();
+                break;
+
             case ConsoleKey.X:
                 await TranscribeAsync();
+                break;
+
+            case ConsoleKey.A when key.Modifiers.HasFlag(ConsoleModifiers.Control):
+                _state.SelectAll();
+                _state.LastActionResult = $"Selected all {_state.Segments.Count} segments";
                 break;
 
             case ConsoleKey.T:
@@ -513,6 +522,39 @@ public class TuiHost
             _state.TranscriptText = string.Join("\n\n---\n\n", results);
             _state.Mode = AppMode.ResultView;
             _state.LastActionResult = "Transcription complete";
+        }
+        catch (Exception ex)
+        {
+            _state.LastActionResult = $"Transcribe failed: {ex.Message}";
+        }
+    }
+
+    private async Task TranscribeAllAsync()
+    {
+        if (string.IsNullOrEmpty(_config.ApiKey))
+        {
+            _state.LastActionResult = "No API key. Press Ctrl+, to configure.";
+            return;
+        }
+
+        if (_state.Segments.Count == 0)
+        {
+            _state.LastActionResult = "No segments to transcribe";
+            return;
+        }
+
+        _state.LastActionResult = "Transcribing all segments...";
+
+        try
+        {
+            var lang = _state.ActiveLanguage == "auto" ? null : _state.ActiveLanguage;
+            var splicedPath = Path.Combine(TempDir, "_transcribe_all.wav");
+            AudioEngine.SpliceSegments(_state.Segments.Select(s => s.FilePath), splicedPath);
+            var text = await _scribe.TranscribeAsync(splicedPath, lang, _config.AudioEvents);
+
+            _state.TranscriptText = text;
+            _state.Mode = AppMode.ResultView;
+            _state.LastActionResult = $"Transcribed all {_state.Segments.Count} segments";
         }
         catch (Exception ex)
         {
