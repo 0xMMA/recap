@@ -93,6 +93,19 @@ public static class WaveformRenderer
                 peaks[col] = peak;
             }
 
+            // Normalize using median of non-silent peaks
+            // Median is robust against both loud pops and silence gaps
+            var nonSilent = peaks.Where(p => p > 0.001f).OrderBy(p => p).ToArray();
+            if (nonSilent.Length > 0)
+            {
+                float median = nonSilent[nonSilent.Length / 2];
+                // Scale so median speech maps to ~60% bar height
+                // Peaks louder than ~1.7× median clip to full bar
+                float normFactor = median / 0.6f;
+                for (int i = 0; i < peaks.Length; i++)
+                    peaks[i] = Math.Min(1f, peaks[i] / normFactor);
+            }
+
             return Render(peaks, width);
         }
         catch

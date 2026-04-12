@@ -250,6 +250,145 @@ public class TuiRenderTests : IDisposable
         wide.Length.ShouldBe(20);
     }
 
+    [Fact]
+    public void WaveformRenderer_QuietAudio_NormalizesToVisibleBars()
+    {
+        // Very quiet signal — only ~3% of max amplitude
+        // Without normalization these would be invisible (space chars)
+        var samples = new short[1600]; // 100ms at 16kHz
+        for (int i = 0; i < samples.Length; i++)
+            samples[i] = (short)(Math.Sin(i * 0.1) * 1000); // ~3% amplitude
+
+        var path = CreateTestWav("quiet.wav", samples);
+        var sparkline = WaveformRenderer.GetOrRenderSegment(path, 10);
+
+        sparkline.Length.ShouldBe(10);
+        // After normalization, should have visible bars (not spaces)
+        var barChars = new[] { '▁', '▂', '▃', '▄', '▅', '▆', '▇', '█' };
+        sparkline.Count(c => barChars.Contains(c)).ShouldBeGreaterThan(0,
+            "Quiet audio should produce visible bars after normalization");
+        sparkline.Trim().ShouldNotBeEmpty();
+    }
+
+    [Fact]
+    public void WaveformRenderer_LoudAudio_AlsoNormalized()
+    {
+        // Loud signal at full amplitude — should show visible bars
+        var samples = new short[1600];
+        for (int i = 0; i < samples.Length; i++)
+            samples[i] = (short)(Math.Sin(i * 0.1) * 30000); // ~91% amplitude
+
+        var path = CreateTestWav("loud.wav", samples);
+        var sparkline = WaveformRenderer.GetOrRenderSegment(path, 10);
+
+        var barChars = new[] { '▁', '▂', '▃', '▄', '▅', '▆', '▇', '█' };
+        sparkline.Count(c => barChars.Contains(c)).ShouldBeGreaterThan(0);
+    }
+
+    [Fact]
+    public void WaveformRenderer_VaryingLevels_ShowsShape()
+    {
+        // First half quiet, second half loud — should show contrast
+        var samples = new short[3200];
+        for (int i = 0; i < 1600; i++)
+            samples[i] = (short)(Math.Sin(i * 0.1) * 500);  // quiet
+        for (int i = 1600; i < 3200; i++)
+            samples[i] = (short)(Math.Sin(i * 0.1) * 10000); // loud
+
+        var path = CreateTestWav("varying.wav", samples);
+        var sparkline = WaveformRenderer.GetOrRenderSegment(path, 10);
+
+        // Loud half should have bigger bars than quiet half
+        var quietPart = sparkline[..5];
+        var loudPart = sparkline[5..];
+
+        // Compute average bar height for each half
+        var barValues = new Dictionary<char, int>
+        {
+            {' ', 0}, {'▁', 1}, {'▂', 2}, {'▃', 3}, {'▄', 4},
+            {'▅', 5}, {'▆', 6}, {'▇', 7}, {'█', 8}
+        };
+        var quietAvg = quietPart.Average(c => (double)barValues.GetValueOrDefault(c, 0));
+        var loudAvg = loudPart.Average(c => (double)barValues.GetValueOrDefault(c, 0));
+
+        loudAvg.ShouldBeGreaterThan(quietAvg, "Loud half should have taller bars than quiet half");
+    }
+
+    [Fact]
+    public void WaveformRenderer_SpeechPattern_ShowsMeaningfulShape()
+    {
+        // Simulate real speech: bursts of audio with silence gaps
+        // ~60% silence, ~40% speech — typical for spoken recap
+        var samples = new short[16000]; // 1 second at 16kHz
+        for (int i = 0; i < samples.Length; i++)
+        {
+            // Create 4 "words" with silence between them
+            bool isSpeech = (i % 4000) < 1600; // 40% duty cycle
+            samples[i] = isSpeech
+                ? (short)(Math.Sin(i * 0.3) * 8000) // ~24% amplitude speech
+                : (short)(Random.Shared.Next(-30, 30)); // near-silence noise floor
+        }
+
+        var path = CreateTestWav("speech.wav", samples);
+        var sparkline = WaveformRenderer.GetOrRenderSegment(path, 20);
+
+        sparkline.Length.ShouldBe(20);
+        // Should have visible bars (speech portions) and quiet areas
+        var barChars = new[] { '▃', '▄', '▅', '▆', '▇', '█' };
+        int tallBars = sparkline.Count(c => barChars.Contains(c));
+        tallBars.ShouldBeGreaterThan(0, "Speech portions should produce visible bars");
+        // Should also have some low/empty columns for silence gaps
+        int lowOrEmpty = sparkline.Count(c => c == ' ' || c == '▁');
+        lowOrEmpty.ShouldBeGreaterThan(0, "Silence gaps should produce low bars");
+    }
+
+    [Fact]
+    public void WaveformRenderer_SpeechWithLoudPop_PopDoesntFlattenSpeech()
+    {
+        // Speech at moderate level + one loud click
+        var samples = new short[16000];
+        for (int i = 0; i < samples.Length; i++)
+        {
+            bool isSpeech = (i % 4000) < 1600;
+            samples[i] = isSpeech
+                ? (short)(Math.Sin(i * 0.3) * 5000) // moderate speech
+                : (short)0;
+        }
+        // Add one loud pop at sample 8000
+        for (int i = 8000; i < 8050; i++)
+            samples[i] = short.MaxValue;
+
+        var path = CreateTestWav("pop.wav", samples);
+        var sparkline = WaveformRenderer.GetOrRenderSegment(path, 20);
+
+        // Speech columns should still have meaningful bars (not squashed by pop)
+        // Count columns with mid-range bars (▃▄▅▆▇█)
+        var midBars = new[] { '▃', '▄', '▅', '▆', '▇', '█' };
+        int visibleCount = sparkline.Count(c => midBars.Contains(c));
+        visibleCount.ShouldBeGreaterThan(2,
+            "Speech portions should have visible mid-range bars even with a loud pop present");
+    }
+
+    [Fact]
+    public void SegmentListPanel_WithValidSegment_ShowsSparklineChars()
+    {
+        var state = new SessionState();
+        // Create WAV with actual audio content
+        var samples = new short[1600];
+        for (int i = 0; i < samples.Length; i++)
+            samples[i] = (short)(Math.Sin(i * 0.1) * 5000);
+        var path = CreateTestWav("sparkline.wav", samples);
+        state.AddSegment(MakeSegment(path, TimeSpan.FromSeconds(1)));
+
+        var panel = new SegmentListPanel(state);
+        var output = RenderToString(panel);
+
+        // Output should contain at least one waveform bar character (not just spaces)
+        var barChars = new[] { '▁', '▂', '▃', '▄', '▅', '▆', '▇', '█' };
+        barChars.ShouldContain(c => output.Contains(c),
+            "Segment list should contain visible sparkline bar characters");
+    }
+
     // --- Segment.HasFile Cache Tests ---
 
     [Fact]

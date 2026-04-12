@@ -402,11 +402,11 @@ public class TuiHost
                 break;
 
             case ConsoleKey.X when key.Modifiers.HasFlag(ConsoleModifiers.Shift):
-                await TranscribeAllAsync();
+                _ = TranscribeAllAsync(); // Fire-and-forget — UI keeps rendering
                 break;
 
             case ConsoleKey.X:
-                await TranscribeAsync();
+                _ = TranscribeAsync(); // Fire-and-forget — UI keeps rendering
                 break;
 
             case ConsoleKey.A when key.Modifiers.HasFlag(ConsoleModifiers.Control):
