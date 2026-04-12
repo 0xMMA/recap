@@ -16,6 +16,7 @@ When the user says "ship it", "release it", "push a release", or similar:
 3. Commit the version bump with the other changes
 4. Tag as `vX.Y.Z` and push tag — CI handles the rest
 5. Do **not** delete or move old tags/releases
+6. Write polished release notes — features, fixes, keybind tables, install instructions. No bare auto-generated changelogs.
 
 ### Commits
 
