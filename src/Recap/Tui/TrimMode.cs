@@ -96,14 +96,16 @@ public class TrimMode
 
     private void ApplyTrim(Segment segment)
     {
-        using var reader = new WaveFileReader(segment.FilePath);
-        var totalSamples = reader.SampleCount;
-        long startSample = (long)(_markerLeft / (float)_totalColumns * totalSamples);
-        long endSample = (long)((_markerRight + 1) / (float)_totalColumns * totalSamples);
-
         var tempPath = segment.FilePath + ".trim.wav";
-        using (var writer = new WaveFileWriter(tempPath, reader.WaveFormat))
+
+        // Scope reader so file handle is released before delete
+        using (var reader = new WaveFileReader(segment.FilePath))
         {
+            var totalSamples = reader.SampleCount;
+            long startSample = (long)(_markerLeft / (float)_totalColumns * totalSamples);
+            long endSample = (long)((_markerRight + 1) / (float)_totalColumns * totalSamples);
+
+            using var writer = new WaveFileWriter(tempPath, reader.WaveFormat);
             reader.Position = startSample * reader.WaveFormat.BlockAlign;
             long bytesToRead = (endSample - startSample) * reader.WaveFormat.BlockAlign;
             var buffer = new byte[Math.Min(bytesToRead, 65536)];
@@ -118,11 +120,22 @@ public class TrimMode
             }
         }
 
-        File.Delete(segment.FilePath);
+        // Reader disposed — safe to replace file
+        WaveformRenderer.InvalidateCache(segment.FilePath);
+        RetryFileOp(() => File.Delete(segment.FilePath));
         File.Move(tempPath, segment.FilePath);
 
         using var trimmed = new WaveFileReader(segment.FilePath);
         segment.Duration = trimmed.TotalTime;
+    }
+
+    private static void RetryFileOp(Action op)
+    {
+        for (int i = 0; i < 3; i++)
+        {
+            try { op(); return; }
+            catch (IOException) when (i < 2) { Thread.Sleep(100); }
+        }
     }
 
     private static float[] LoadPeaks(string filePath, int columns)

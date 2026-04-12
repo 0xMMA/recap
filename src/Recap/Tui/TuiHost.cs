@@ -1,6 +1,7 @@
 using Recap.Audio;
 using Recap.Config;
 using Recap.Interop;
+using Recap.Logging;
 using Recap.Models;
 using Recap.State;
 using Recap.Api;
@@ -37,6 +38,8 @@ public class TuiHost
 
     public async Task RunAsync()
     {
+        Log.Info($"Recap started — session {_state.SessionId}");
+
         // First-run wizard
         SettingsDialog.RunFirstRunWizard(_config);
         _scribe.ApiKey = _config.ApiKey;
@@ -166,13 +169,21 @@ public class TuiHost
                 var result = AutoTrimmer.Trim(seg.FilePath, outputPath);
                 if (result.Success && result.OutputPath != null)
                 {
-                    File.Delete(seg.FilePath);
-                    File.Move(result.OutputPath, seg.FilePath);
-                    using var reader = new NAudio.Wave.WaveFileReader(seg.FilePath);
-                    seg.Duration = reader.TotalTime;
-                    WaveformRenderer.InvalidateCache(seg.FilePath);
-                    seg.RefreshHasFile();
-                    trimmed++;
+                    try
+                    {
+                        RetryFileOp(() => File.Delete(seg.FilePath));
+                        File.Move(result.OutputPath, seg.FilePath);
+                        using var reader = new NAudio.Wave.WaveFileReader(seg.FilePath);
+                        seg.Duration = reader.TotalTime;
+                        WaveformRenderer.InvalidateCache(seg.FilePath);
+                        seg.RefreshHasFile();
+                        trimmed++;
+                    }
+                    catch (IOException ex)
+                    {
+                        _state.LastActionResult = $"Auto-trim file error: {ex.Message}";
+                        Log.Error("Auto-trim file replace failed", ex);
+                    }
                 }
                 else
                 {
@@ -521,10 +532,12 @@ public class TuiHost
             _state.RecordingState = RecordingState.Recording;
             _state.Mode = AppMode.Recording;
             _state.LastActionResult = "Recording...";
+            Log.Info($"Recording started: {path}");
         }
         catch (IOException ex)
         {
             _state.LastActionResult = $"Cannot start recording: {ex.Message}";
+            Log.Error("Recording start failed", ex);
         }
     }
 
@@ -535,6 +548,7 @@ public class TuiHost
         _state.RecordingState = RecordingState.Idle;
         _state.Mode = AppMode.Normal;
         _state.LastActionResult = $"Recorded {segment.Duration:mm\\:ss\\.f}";
+        Log.Info($"Recording stopped: {segment.FilePath} ({segment.Duration:mm\\:ss\\.f})");
         SessionPersistence.SaveSessionManifest(_state);
     }
 
@@ -575,6 +589,7 @@ public class TuiHost
         catch (Exception ex)
         {
             _state.LastActionResult = $"Playback failed: {ex.Message}";
+            Log.Error("Playback failed", ex);
         }
     }
 
@@ -608,6 +623,7 @@ public class TuiHost
         }
 
         _state.LastActionResult = "Transcribing...";
+        Log.Info($"Transcribing {segments.Count} segment(s)...");
 
         try
         {
@@ -616,6 +632,7 @@ public class TuiHost
 
             foreach (var seg in segments)
             {
+                Log.Info($"Transcribing: {seg.FilePath}");
                 var text = await _scribe.TranscribeAsync(seg.FilePath, lang, _config.AudioEvents);
                 results.Add(text);
             }
@@ -624,10 +641,12 @@ public class TuiHost
             _state.Mode = AppMode.ResultView;
             _state.ResultScrollOffset = 0;
             _state.LastActionResult = "Transcription complete";
+            Log.Info($"Transcription complete — {results.Count} segment(s), {_state.TranscriptText.Length} chars");
         }
         catch (Exception ex)
         {
             _state.LastActionResult = $"Transcribe failed: {ex.Message}";
+            Log.Error("Transcription failed", ex);
         }
     }
 
@@ -650,6 +669,7 @@ public class TuiHost
         _state.LastActionResult = skipped > 0
             ? $"Transcribing {valid.Count} segments ({skipped} skipped — missing)..."
             : "Transcribing all segments...";
+        Log.Info($"Transcribing all — {valid.Count} valid, {skipped} skipped");
 
         try
         {
@@ -662,10 +682,12 @@ public class TuiHost
             _state.Mode = AppMode.ResultView;
             _state.ResultScrollOffset = 0;
             _state.LastActionResult = $"Transcribed all {valid.Count} segments";
+            Log.Info($"Transcribe-all complete — {text.Length} chars");
         }
         catch (Exception ex)
         {
             _state.LastActionResult = $"Transcribe failed: {ex.Message}";
+            Log.Error("Transcribe-all failed", ex);
         }
     }
 
@@ -689,6 +711,16 @@ public class TuiHost
         catch (Exception ex)
         {
             _state.LastActionResult = $"Explorer failed: {ex.Message}";
+            Log.Error("Explorer failed", ex);
+        }
+    }
+
+    private static void RetryFileOp(Action op)
+    {
+        for (int i = 0; i < 3; i++)
+        {
+            try { op(); return; }
+            catch (IOException) when (i < 2) { Thread.Sleep(100); }
         }
     }
 
