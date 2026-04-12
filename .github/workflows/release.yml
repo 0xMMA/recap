@@ -68,13 +68,17 @@ jobs:
           --mainExe Recap.exe
           --noInst
 
-      - name: Upload to GitHub Releases
-        run: >
-          vpk upload github
-          --repoUrl https://github.com/${{ github.repository }}
-          --tag v${{ steps.version.outputs.VERSION }}
-          --releaseName "Recap v${{ steps.version.outputs.VERSION }}"
-          --token ${{ secrets.GITHUB_TOKEN }}
+      - name: Create GitHub Release with assets
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION="${{ steps.version.outputs.VERSION }}"
+          gh release create "v${VERSION}" \
+            --draft \
+            --title "Recap v${VERSION}" \
+            --generate-notes \
+            Releases/*
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
