@@ -1,0 +1,38 @@
+# Build
+[Bb]in/
+[Oo]bj/
+[Oo]ut/
+publish/
+
+# IDE
+.vs/
+.vscode/
+*.user
+*.suo
+*.sln.docstates
+
+# Rider
+.idea/
+*.sln.iml
+
+# NuGet
+*.nupkg
+**/packages/
+
+# OS
+Thumbs.db
+desktop.ini
+
+# User secrets / keys
+appsettings.*.json
+!appsettings.json
+!appsettings.Development.json
+
+# Test results
+TestResults/
+coverage/
+*.coverage
+*.coveragexml
+
+# Self-contained publish artifacts
+*.exe
