@@ -6,7 +6,19 @@
         x:Class="Recap.Desktop.Views.MainWindow"
         Title="Recap" Width="900" Height="600"
         MinWidth="640" MinHeight="400"
+        Icon="avares://Recap/Assets/icon.ico"
         x:DataType="vm:MainWindowViewModel">
+
+    <Window.Styles>
+        <Style Selector="Border.toolbar Button">
+            <Setter Property="MinWidth" Value="58" />
+            <Setter Property="MinHeight" Value="52" />
+            <Setter Property="Padding" Value="4,3" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Background" Value="#383838" />
+            <Setter Property="Foreground" Value="#DDD" />
+        </Style>
+    </Window.Styles>
 
     <Window.Resources>
         <conv:DurationConverter x:Key="DurationConverter" />
@@ -14,185 +26,173 @@
 
     <DockPanel>
         <!-- Toolbar -->
-        <Border DockPanel.Dock="Top" Background="#2D2D2D" Padding="4">
-            <StackPanel Orientation="Horizontal" Spacing="4">
+        <Border DockPanel.Dock="Top" Classes="toolbar" Background="#2D2D2D" Padding="8,6"
+                CornerRadius="0" BorderThickness="0,0,0,1" BorderBrush="#444">
+            <StackPanel Orientation="Horizontal" Spacing="2">
                 <!-- Record -->
                 <Button Focusable="False" ToolTip.Tip="Start or stop recording (R)"
-                        Command="{Binding ToggleRecordingCommand}"
-                        MinWidth="64" MinHeight="56" Padding="6,4">
+                        Command="{Binding ToggleRecordingCommand}">
                     <Grid>
                         <TextBlock Text="R" FontSize="9" Foreground="#555"
                                    HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-2,-2,0" />
                         <StackPanel Spacing="0" HorizontalAlignment="Center" VerticalAlignment="Center">
-                            <TextBlock Text="&#x23FA;" FontSize="20" HorizontalAlignment="Center"
+                            <TextBlock Text="&#x23FA;" FontSize="18" HorizontalAlignment="Center"
                                        Foreground="{Binding RecordingState, Converter={x:Static conv:RecordingStateConverters.Foreground}}" />
-                            <TextBlock Text="Record" FontSize="10" HorizontalAlignment="Center" Foreground="#CCC" />
+                            <TextBlock Text="Record" FontSize="9" HorizontalAlignment="Center" Foreground="#CCC" />
                         </StackPanel>
                     </Grid>
                 </Button>
 
-                <Border Width="1" Background="#555" Margin="2,4" />
+                <Border Width="1" Background="#555" Margin="6,6" />
 
                 <!-- Play -->
                 <Button Focusable="False" ToolTip.Tip="Play selected segment (Enter)"
-                        Command="{Binding PlaySelectedCommand}"
-                        MinWidth="64" MinHeight="56" Padding="6,4">
+                        Command="{Binding PlaySelectedCommand}">
                     <Grid>
                         <TextBlock Text="&#x23CE;" FontSize="9" Foreground="#555"
                                    HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-2,-2,0" />
                         <StackPanel Spacing="0" HorizontalAlignment="Center" VerticalAlignment="Center">
-                            <TextBlock Text="&#x25B6;" FontSize="20" HorizontalAlignment="Center" />
-                            <TextBlock Text="Play" FontSize="10" HorizontalAlignment="Center" Foreground="#CCC" />
+                            <TextBlock Text="&#x25B6;" FontSize="18" HorizontalAlignment="Center" />
+                            <TextBlock Text="Play" FontSize="9" HorizontalAlignment="Center" Foreground="#CCC" />
                         </StackPanel>
                     </Grid>
                 </Button>
                 <!-- Play All -->
                 <Button Focusable="False" ToolTip.Tip="Play all segments spliced (Shift+Enter)"
-                        Command="{Binding PlayAllCommand}"
-                        MinWidth="64" MinHeight="56" Padding="6,4">
+                        Command="{Binding PlayAllCommand}">
                     <Grid>
                         <TextBlock Text="&#x21E7;&#x23CE;" FontSize="9" Foreground="#555"
                                    HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-2,-2,0" />
                         <StackPanel Spacing="0" HorizontalAlignment="Center" VerticalAlignment="Center">
-                            <TextBlock Text="&#x23E9;" FontSize="20" HorizontalAlignment="Center" />
-                            <TextBlock Text="Play All" FontSize="10" HorizontalAlignment="Center" Foreground="#CCC" />
+                            <TextBlock Text="&#x23E9;" FontSize="18" HorizontalAlignment="Center" />
+                            <TextBlock Text="Play All" FontSize="9" HorizontalAlignment="Center" Foreground="#CCC" />
                         </StackPanel>
                     </Grid>
                 </Button>
                 <!-- Pause -->
                 <Button Focusable="False" ToolTip.Tip="Pause or resume playback (Space)"
-                        Command="{Binding TogglePauseCommand}"
-                        MinWidth="64" MinHeight="56" Padding="6,4">
+                        Command="{Binding TogglePauseCommand}">
                     <Grid>
                         <TextBlock Text="&#x2423;" FontSize="9" Foreground="#555"
                                    HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-2,-2,0" />
                         <StackPanel Spacing="0" HorizontalAlignment="Center" VerticalAlignment="Center">
-                            <TextBlock Text="&#x23F8;" FontSize="20" HorizontalAlignment="Center" />
-                            <TextBlock Text="Pause" FontSize="10" HorizontalAlignment="Center" Foreground="#CCC" />
+                            <TextBlock Text="&#x23F8;" FontSize="18" HorizontalAlignment="Center" />
+                            <TextBlock Text="Pause" FontSize="9" HorizontalAlignment="Center" Foreground="#CCC" />
                         </StackPanel>
                     </Grid>
                 </Button>
 
-                <Border Width="1" Background="#555" Margin="2,4" />
+                <Border Width="1" Background="#555" Margin="6,6" />
 
                 <!-- Trim -->
                 <Button Focusable="False" ToolTip.Tip="Trim selected segment (T)"
-                        Command="{Binding EnterTrimModeCommand}"
-                        MinWidth="64" MinHeight="56" Padding="6,4">
+                        Command="{Binding EnterTrimModeCommand}">
                     <Grid>
                         <TextBlock Text="T" FontSize="9" Foreground="#555"
                                    HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-2,-2,0" />
                         <StackPanel Spacing="0" HorizontalAlignment="Center" VerticalAlignment="Center">
-                            <TextBlock Text="&#x2702;" FontSize="20" HorizontalAlignment="Center" />
-                            <TextBlock Text="Trim" FontSize="10" HorizontalAlignment="Center" Foreground="#CCC" />
+                            <TextBlock Text="&#x2702;" FontSize="18" HorizontalAlignment="Center" />
+                            <TextBlock Text="Trim" FontSize="9" HorizontalAlignment="Center" Foreground="#CCC" />
                         </StackPanel>
                     </Grid>
                 </Button>
                 <!-- Auto-Trim -->
                 <Button Focusable="False" ToolTip.Tip="Auto-remove silence from selection (A)"
-                        Command="{Binding AutoTrimCommand}"
-                        MinWidth="64" MinHeight="56" Padding="6,4">
+                        Command="{Binding AutoTrimCommand}">
                     <Grid>
                         <TextBlock Text="A" FontSize="9" Foreground="#555"
                                    HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-2,-2,0" />
                         <StackPanel Spacing="0" HorizontalAlignment="Center" VerticalAlignment="Center">
-                            <TextBlock Text="&#x26A1;" FontSize="20" HorizontalAlignment="Center" />
-                            <TextBlock Text="Auto Trim" FontSize="10" HorizontalAlignment="Center" Foreground="#CCC" />
+                            <TextBlock Text="&#x26A1;" FontSize="18" HorizontalAlignment="Center" />
+                            <TextBlock Text="Auto Trim" FontSize="9" HorizontalAlignment="Center" Foreground="#CCC" />
                         </StackPanel>
                     </Grid>
                 </Button>
 
-                <Border Width="1" Background="#555" Margin="2,4" />
+                <Border Width="1" Background="#555" Margin="6,6" />
 
                 <!-- Transcribe -->
                 <Button Focusable="False" ToolTip.Tip="Transcribe selected segments (X)"
-                        Command="{Binding TranscribeCommand}"
-                        MinWidth="64" MinHeight="56" Padding="6,4">
+                        Command="{Binding TranscribeCommand}">
                     <Grid>
                         <TextBlock Text="X" FontSize="9" Foreground="#555"
                                    HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-2,-2,0" />
                         <StackPanel Spacing="0" HorizontalAlignment="Center" VerticalAlignment="Center">
                             <TextBlock Text="Tx" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center" />
-                            <TextBlock Text="Transcribe" FontSize="10" HorizontalAlignment="Center" Foreground="#CCC" />
+                            <TextBlock Text="Transcribe" FontSize="9" HorizontalAlignment="Center" Foreground="#CCC" />
                         </StackPanel>
                     </Grid>
                 </Button>
                 <!-- Transcribe All -->
                 <Button Focusable="False" ToolTip.Tip="Transcribe all segments combined (Shift+X)"
-                        Command="{Binding TranscribeAllCommand}"
-                        MinWidth="64" MinHeight="56" Padding="6,4">
+                        Command="{Binding TranscribeAllCommand}">
                     <Grid>
                         <TextBlock Text="&#x21E7;X" FontSize="9" Foreground="#555"
                                    HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-2,-2,0" />
                         <StackPanel Spacing="0" HorizontalAlignment="Center" VerticalAlignment="Center">
                             <TextBlock Text="TX" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center" />
-                            <TextBlock Text="TX All" FontSize="10" HorizontalAlignment="Center" Foreground="#CCC" />
+                            <TextBlock Text="TX All" FontSize="9" HorizontalAlignment="Center" Foreground="#CCC" />
                         </StackPanel>
                     </Grid>
                 </Button>
                 <!-- Language -->
                 <Button Focusable="False" ToolTip.Tip="Cycle transcription language (L)"
-                        Command="{Binding CycleLanguageCommand}"
-                        MinWidth="64" MinHeight="56" Padding="6,4">
+                        Command="{Binding CycleLanguageCommand}">
                     <Grid>
                         <TextBlock Text="L" FontSize="9" Foreground="#555"
                                    HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-2,-2,0" />
                         <StackPanel Spacing="0" HorizontalAlignment="Center" VerticalAlignment="Center">
                             <TextBlock Text="{Binding ActiveLanguage}" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center" />
-                            <TextBlock Text="Lang" FontSize="10" HorizontalAlignment="Center" Foreground="#CCC" />
+                            <TextBlock Text="Lang" FontSize="9" HorizontalAlignment="Center" Foreground="#CCC" />
                         </StackPanel>
                     </Grid>
                 </Button>
 
-                <Border Width="1" Background="#555" Margin="2,4" />
+                <Border Width="1" Background="#555" Margin="6,6" />
 
                 <!-- Save -->
-                <Button x:Name="SaveButton" Focusable="False" ToolTip.Tip="Save audio to file (S)"
-                        MinWidth="64" MinHeight="56" Padding="6,4">
+                <Button x:Name="SaveButton" Focusable="False" ToolTip.Tip="Save audio to file (S)">
                     <Grid>
                         <TextBlock Text="S" FontSize="9" Foreground="#555"
                                    HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-2,-2,0" />
                         <StackPanel Spacing="0" HorizontalAlignment="Center" VerticalAlignment="Center">
-                            <TextBlock Text="&#x2B07;" FontSize="20" HorizontalAlignment="Center" />
-                            <TextBlock Text="Save" FontSize="10" HorizontalAlignment="Center" Foreground="#CCC" />
+                            <TextBlock Text="&#x2B07;" FontSize="18" HorizontalAlignment="Center" />
+                            <TextBlock Text="Save" FontSize="9" HorizontalAlignment="Center" Foreground="#CCC" />
                         </StackPanel>
                     </Grid>
                 </Button>
                 <!-- Open Folder -->
                 <Button Focusable="False" ToolTip.Tip="Open segment folder in Explorer (F)"
-                        Command="{Binding OpenInExplorerCommand}"
-                        MinWidth="64" MinHeight="56" Padding="6,4">
+                        Command="{Binding OpenInExplorerCommand}">
                     <Grid>
                         <TextBlock Text="F" FontSize="9" Foreground="#555"
                                    HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-2,-2,0" />
                         <StackPanel Spacing="0" HorizontalAlignment="Center" VerticalAlignment="Center">
-                            <TextBlock Text="&#x25B8;" FontSize="20" HorizontalAlignment="Center" />
-                            <TextBlock Text="Folder" FontSize="10" HorizontalAlignment="Center" Foreground="#CCC" />
+                            <TextBlock Text="&#x25B8;" FontSize="18" HorizontalAlignment="Center" />
+                            <TextBlock Text="Folder" FontSize="9" HorizontalAlignment="Center" Foreground="#CCC" />
                         </StackPanel>
                     </Grid>
                 </Button>
                 <!-- New -->
                 <Button Focusable="False" ToolTip.Tip="Start new recording session (N)"
-                        Command="{Binding NewSessionCommand}"
-                        MinWidth="64" MinHeight="56" Padding="6,4">
+                        Command="{Binding NewSessionCommand}">
                     <Grid>
                         <TextBlock Text="N" FontSize="9" Foreground="#555"
                                    HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-2,-2,0" />
                         <StackPanel Spacing="0" HorizontalAlignment="Center" VerticalAlignment="Center">
-                            <TextBlock Text="+" FontSize="20" HorizontalAlignment="Center" />
-                            <TextBlock Text="New" FontSize="10" HorizontalAlignment="Center" Foreground="#CCC" />
+                            <TextBlock Text="+" FontSize="18" HorizontalAlignment="Center" />
+                            <TextBlock Text="New" FontSize="9" HorizontalAlignment="Center" Foreground="#CCC" />
                         </StackPanel>
                     </Grid>
                 </Button>
                 <!-- Settings -->
-                <Button x:Name="SettingsButton" Focusable="False" ToolTip.Tip="Open settings (Ctrl+,)"
-                        MinWidth="64" MinHeight="56" Padding="6,4">
+                <Button x:Name="SettingsButton" Focusable="False" ToolTip.Tip="Open settings (Ctrl+,)">
                     <Grid>
                         <TextBlock Text="&#x2318;," FontSize="9" Foreground="#555"
                                    HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-2,-2,0" />
                         <StackPanel Spacing="0" HorizontalAlignment="Center" VerticalAlignment="Center">
-                            <TextBlock Text="&#x2699;" FontSize="20" HorizontalAlignment="Center" />
-                            <TextBlock Text="Settings" FontSize="10" HorizontalAlignment="Center" Foreground="#CCC" />
+                            <TextBlock Text="&#x2699;" FontSize="18" HorizontalAlignment="Center" />
+                            <TextBlock Text="Settings" FontSize="9" HorizontalAlignment="Center" Foreground="#CCC" />
                         </StackPanel>
                     </Grid>
                 </Button>
