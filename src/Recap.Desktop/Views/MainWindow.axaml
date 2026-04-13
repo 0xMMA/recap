@@ -334,6 +334,7 @@
                                           SelectionStart="{Binding SelectionStart, Mode=TwoWay}"
                                           SelectionEnd="{Binding SelectionEnd, Mode=TwoWay}"
                                           TrimPreview="{Binding AutoTrimPreview}"
+                                          ThresholdLevel="{Binding AutoTrimThreshold}"
                                           TotalDurationSeconds="{Binding SelectedDurationSeconds}" />
 
                 <!-- Transcript display -->

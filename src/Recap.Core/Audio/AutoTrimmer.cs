@@ -61,44 +61,28 @@ public static class AutoTrimmer
         return new TrimResult(true, outputPath, null);
     }
 
-    /// <summary>
-    /// Compute speech threshold adaptively.
-    /// Uses percentile gap detection: find the natural boundary between
-    /// low-energy (silence) and high-energy (speech) windows.
-    /// Works for whispers, normal speech, and loud recordings.
-    /// </summary>
     private static float ComputeSpeechThreshold(float[] rmsWindows)
     {
         var sorted = rmsWindows.Where(r => r > 1e-7f).OrderBy(r => r).ToArray();
         if (sorted.Length < 4)
             return -1;
 
-        // Find the biggest ratio gap between consecutive sorted values.
-        // This naturally separates silence cluster from speech cluster,
-        // regardless of absolute amplitude.
-        float bestGapRatio = 0;
-        int bestGapIdx = -1;
-        // Only look in the middle 80% to avoid edge artifacts
-        int start = sorted.Length / 10;
-        int end = sorted.Length * 9 / 10;
-        for (int i = start; i < end; i++)
-        {
-            if (sorted[i] < 1e-7f) continue;
-            float ratio = sorted[i + 1] / sorted[i];
-            if (ratio > bestGapRatio)
-            {
-                bestGapRatio = ratio;
-                bestGapIdx = i;
-            }
-        }
+        // Use percentile-based threshold:
+        // p10 = likely silence/noise floor
+        // p75 = likely speech level
+        float p10 = sorted[sorted.Length / 10];
+        float p75 = sorted[(int)(sorted.Length * 0.75)];
 
-        // Need at least 2x ratio gap to consider it a real boundary
-        if (bestGapRatio < 2.0f || bestGapIdx < 0)
-            return -1;
+        // If there's at least 30% difference between silence and speech levels,
+        // we can distinguish them
+        if (p75 <= p10 * 1.3f)
+            return -1; // Too uniform, can't distinguish
 
-        // Threshold = geometric mean of values at the gap boundary
-        float threshold = MathF.Sqrt(sorted[bestGapIdx] * sorted[bestGapIdx + 1]);
-        return threshold;
+        // Threshold at 40% between p10 and p75 (in log space for better audio scaling)
+        float logP10 = MathF.Log(Math.Max(p10, 1e-7f));
+        float logP75 = MathF.Log(Math.Max(p75, 1e-7f));
+        float logThreshold = logP10 + (logP75 - logP10) * 0.4f;
+        return MathF.Exp(logThreshold);
     }
 
     /// <summary>
@@ -158,6 +142,88 @@ public static class AutoTrimmer
         {
             return null;
         }
+    }
+
+    public static float ComputeDefaultThreshold(string filePath)
+    {
+        try
+        {
+            using var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+            using var reader = new WaveFileReader(stream);
+            var samples = ReadSamples(reader);
+            if (samples.Length == 0) return -1;
+            int windowSize = reader.WaveFormat.SampleRate * WindowMs / 1000;
+            var rmsWindows = ComputeRms(samples, windowSize);
+            return ComputeSpeechThreshold(rmsWindows);
+        }
+        catch { return -1; }
+    }
+
+    public static float[]? GetSilenceMaskWithThreshold(string filePath, int width, float threshold,
+        int minSilenceMs = MinSilenceMs, int paddingMs = PaddingMs)
+    {
+        try
+        {
+            using var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+            using var reader = new WaveFileReader(stream);
+            var format = reader.WaveFormat;
+            if (format.BitsPerSample != 16 || format.Channels != 1) return null;
+
+            var samples = ReadSamples(reader);
+            if (samples.Length == 0) return null;
+
+            int windowSize = format.SampleRate * WindowMs / 1000;
+            var rmsWindows = ComputeRms(samples, windowSize);
+            if (rmsWindows.Length == 0) return null;
+
+            int minSilenceWindows = minSilenceMs / WindowMs;
+            int paddingWindows = paddingMs / WindowMs;
+
+            var isSpeech = new bool[rmsWindows.Length];
+            for (int i = 0; i < rmsWindows.Length; i++)
+                isSpeech[i] = rmsWindows[i] > threshold;
+
+            var regions = FindSpeechRegions(isSpeech, minSilenceWindows, paddingWindows);
+
+            var mask = new float[width];
+            for (int i = 0; i < width; i++)
+            {
+                int windowIdx = (int)((double)i / width * rmsWindows.Length);
+                windowIdx = Math.Clamp(windowIdx, 0, rmsWindows.Length - 1);
+                bool inSpeech = regions.Any(r => windowIdx >= r.Start && windowIdx < r.End);
+                mask[i] = inSpeech ? 0f : 1f;
+            }
+            return mask;
+        }
+        catch { return null; }
+    }
+
+    /// <summary>
+    /// Get RMS values for diagnostic display (normalized 0-1).
+    /// </summary>
+    public static float[]? GetRmsValues(string filePath, int width)
+    {
+        try
+        {
+            using var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+            using var reader = new WaveFileReader(stream);
+            var samples = ReadSamples(reader);
+            if (samples.Length == 0) return null;
+            int windowSize = reader.WaveFormat.SampleRate * WindowMs / 1000;
+            var rmsWindows = ComputeRms(samples, windowSize);
+
+            // Resample to width
+            var result = new float[width];
+            float ratio = (float)rmsWindows.Length / width;
+            for (int i = 0; i < width; i++)
+            {
+                int idx = (int)(i * ratio);
+                idx = Math.Clamp(idx, 0, rmsWindows.Length - 1);
+                result[i] = rmsWindows[idx];
+            }
+            return result;
+        }
+        catch { return null; }
     }
 
     private static short[] ReadSamples(WaveFileReader reader)

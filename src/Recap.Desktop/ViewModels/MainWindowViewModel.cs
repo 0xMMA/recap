@@ -79,6 +79,9 @@ public partial class MainWindowViewModel : ObservableObject
     [ObservableProperty]
     private float[]? _autoTrimPreview;
 
+    [ObservableProperty]
+    private double _autoTrimThreshold = -1;
+
     public ObservableCollection<SegmentViewModel> Segments { get; } = new();
 
     private string TempDir => Path.Combine(Path.GetTempPath(), "recap", _state.SessionId);
@@ -704,10 +707,16 @@ public partial class MainWindowViewModel : ObservableObject
     public void ComputeAutoTrimPreview()
     {
         var seg = _state.GetSelected();
-        if (seg != null && seg.HasFile)
-        {
-            AutoTrimPreview = AutoTrimmer.GetSilenceMask(seg.FilePath, 500);
-        }
+        if (seg == null || !seg.HasFile) return;
+
+        var threshold = AutoTrimmer.ComputeDefaultThreshold(seg.FilePath);
+        AutoTrimThreshold = threshold > 0 ? threshold : -1;
+        AutoTrimPreview = threshold > 0
+            ? AutoTrimmer.GetSilenceMaskWithThreshold(seg.FilePath, 500, threshold)
+            : null;
+
+        if (AutoTrimPreview == null)
+            StatusText = "Auto-trim: no silence/speech boundary detected";
     }
 
     public void UpdatePlaybackPosition()

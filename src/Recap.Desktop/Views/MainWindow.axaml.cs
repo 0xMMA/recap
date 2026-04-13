@@ -343,6 +343,7 @@ public partial class MainWindow : Window
     private void AutoTrimPreview_Exit(object? sender, PointerEventArgs e)
     {
         _vm.AutoTrimPreview = null;
+        _vm.AutoTrimThreshold = -1;
     }
 
     private void GitHub_Click(object? sender, RoutedEventArgs e)

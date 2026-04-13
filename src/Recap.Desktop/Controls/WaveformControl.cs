@@ -43,6 +43,9 @@ public class WaveformControl : Control
     public static readonly StyledProperty<float[]?> TrimPreviewProperty =
         AvaloniaProperty.Register<WaveformControl, float[]?>(nameof(TrimPreview));
 
+    public static readonly StyledProperty<double> ThresholdLevelProperty =
+        AvaloniaProperty.Register<WaveformControl, double>(nameof(ThresholdLevel), -1.0);
+
     public float[]? Peaks
     {
         get => GetValue(PeaksProperty);
@@ -115,6 +118,12 @@ public class WaveformControl : Control
         set => SetValue(TrimPreviewProperty, value);
     }
 
+    public double ThresholdLevel
+    {
+        get => GetValue(ThresholdLevelProperty);
+        set => SetValue(ThresholdLevelProperty, value);
+    }
+
     private enum DragTarget { None, Left, Right }
     private DragTarget _dragging = DragTarget.None;
     private bool _isSelecting;
@@ -127,7 +136,8 @@ public class WaveformControl : Control
         AffectsRender<WaveformControl>(PeaksProperty, IsRecordingProperty,
             IsTrimModeProperty, TrimLeftProperty, TrimRightProperty,
             ZoomLevelProperty, ScrollOffsetProperty, PlaybackPositionProperty,
-            SelectionStartProperty, SelectionEndProperty, TrimPreviewProperty);
+            SelectionStartProperty, SelectionEndProperty, TrimPreviewProperty,
+            ThresholdLevelProperty);
 
         IsTrimModeProperty.Changed.AddClassHandler<WaveformControl>((c, _) =>
         {
@@ -379,6 +389,27 @@ public class WaveformControl : Control
             context.FillRectangle(waveColor, rect);
         }
 
+        // dB scale on left edge
+        var dbLevels = new[] { 0, -6, -12, -18, -24, -30, -36, -42 };
+        var scalePen = new Pen(new SolidColorBrush(Color.FromArgb(60, 255, 255, 255)), 1);
+        foreach (var db in dbLevels)
+        {
+            float amplitude = MathF.Pow(10, db / 20f); // dB to linear
+            double y = midY - (amplitude * midY * 0.95);
+            if (y > 4 && y < bounds.Height - 4)
+            {
+                // Horizontal guide line (very faint)
+                context.DrawLine(scalePen, new Point(0, y), new Point(bounds.Width, y));
+                // dB label
+                var label = new FormattedText($"{db}dB",
+                    System.Globalization.CultureInfo.CurrentCulture,
+                    FlowDirection.LeftToRight,
+                    new Typeface("Inter", FontStyle.Normal, FontWeight.Normal),
+                    8, new SolidColorBrush(Color.FromArgb(100, 200, 200, 200)));
+                context.DrawText(label, new Point(2, y - label.Height / 2));
+            }
+        }
+
         // Auto-trim preview overlay
         var trimPreview = TrimPreview;
         if (trimPreview != null && trimPreview.Length > 0 && !IsTrimMode)
@@ -402,6 +433,24 @@ public class WaveformControl : Control
                     }
                 }
             }
+        }
+
+        // Threshold line during auto-trim preview
+        if (trimPreview != null && ThresholdLevel > 0)
+        {
+            double threshY = midY - (ThresholdLevel * midY * 0.95);
+            var threshPen = new Pen(new SolidColorBrush(Color.FromRgb(255, 200, 50)), 1,
+                new DashStyle(new[] { 4.0, 4.0 }, 0));
+            context.DrawLine(threshPen, new Point(0, threshY), new Point(bounds.Width, threshY));
+
+            // Label
+            float threshDb = 20 * MathF.Log10(Math.Max((float)ThresholdLevel, 1e-7f));
+            var threshLabel = new FormattedText($"threshold: {threshDb:F0}dB",
+                System.Globalization.CultureInfo.CurrentCulture,
+                FlowDirection.LeftToRight,
+                new Typeface("Inter", FontStyle.Normal, FontWeight.Normal),
+                9, new SolidColorBrush(Color.FromRgb(255, 200, 50)));
+            context.DrawText(threshLabel, new Point(bounds.Width - threshLabel.Width - 4, threshY - threshLabel.Height - 2));
         }
 
         // Selection overlay (when not in trim mode)
