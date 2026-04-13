@@ -45,6 +45,9 @@ public partial class MainWindowViewModel : ObservableObject
     [ObservableProperty]
     private bool _isTranscribing;
 
+    [ObservableProperty]
+    private float[]? _waveformPeaks;
+
     public ObservableCollection<SegmentViewModel> Segments { get; } = new();
 
     private string TempDir => Path.Combine(Path.GetTempPath(), "recap", _state.SessionId);
@@ -394,6 +397,24 @@ public partial class MainWindowViewModel : ObservableObject
             SelectedSegment = Segments[_state.SelectedIndex];
         else
             SelectedSegment = null;
+    }
+
+    partial void OnSelectedSegmentChanged(SegmentViewModel? value)
+    {
+        if (value != null && value.HasFile)
+        {
+            WaveformPeaks = WaveformData.GetPeaks(value.FilePath, 500);
+        }
+        else
+        {
+            WaveformPeaks = null;
+        }
+    }
+
+    public float[]? GetLiveWaveform(int width)
+    {
+        if (_state.RecordingState != RecordingState.Recording) return null;
+        return _audio.GetWaveformSnapshot(width);
     }
 
     public void UpdateConfig(AppConfig config)

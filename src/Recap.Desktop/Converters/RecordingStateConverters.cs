@@ -12,6 +12,7 @@ public static class RecordingStateConverters
     public static readonly IValueConverter StatusLabel = new RecordingStatusLabelConverter();
     public static readonly IValueConverter ApiStatus = new ApiStatusConverter();
     public static readonly IValueConverter ApiColor = new ApiColorConverter();
+    public static readonly IValueConverter IsRecording = new IsRecordingConverter();
 
     private class RecordingIconConverter : IValueConverter
     {
@@ -79,6 +80,17 @@ public static class RecordingStateConverters
         public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
             return value is true ? Green : Gray;
+        }
+
+        public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+            => throw new NotSupportedException();
+    }
+
+    private class IsRecordingConverter : IValueConverter
+    {
+        public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+        {
+            return value is RecordingState state && state == RecordingState.Recording;
         }
 
         public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)

@@ -1,6 +1,8 @@
 using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.Threading;
 using Recap.Core.Models;
+using Recap.Desktop.Controls;
 using Recap.Desktop.ViewModels;
 
 namespace Recap.Desktop.Views;
@@ -8,6 +10,7 @@ namespace Recap.Desktop.Views;
 public partial class MainWindow : Window
 {
     private readonly MainWindowViewModel _vm;
+    private readonly DispatcherTimer _waveformTimer;
 
     public MainWindow()
     {
@@ -17,6 +20,21 @@ public partial class MainWindow : Window
         _vm.RecoverSession();
         Closing += (_, _) => _vm.Cleanup();
         KeyDown += OnKeyDown;
+
+        _waveformTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(66) };
+        _waveformTimer.Tick += (_, _) =>
+        {
+            if (_vm.RecordingState == RecordingState.Recording)
+            {
+                var waveformControl = this.FindControl<WaveformControl>("Waveform");
+                if (waveformControl != null)
+                {
+                    var width = (int)Math.Max(100, waveformControl.Bounds.Width);
+                    _vm.WaveformPeaks = _vm.GetLiveWaveform(width);
+                }
+            }
+        };
+        _waveformTimer.Start();
     }
 
     private async void OnKeyDown(object? sender, KeyEventArgs e)

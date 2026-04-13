@@ -2,6 +2,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:Recap.Desktop.ViewModels"
         xmlns:conv="using:Recap.Desktop.Converters"
+        xmlns:controls="using:Recap.Desktop.Controls"
         x:Class="Recap.Desktop.Views.MainWindow"
         Title="Recap" Width="900" Height="600"
         MinWidth="640" MinHeight="400"
@@ -110,21 +111,23 @@
         </Border>
 
         <!-- Center Content -->
-        <Border Background="#1A1A1A" Padding="16">
-            <Panel>
-                <!-- Placeholder for waveform -->
-                <TextBlock Text="Select a segment"
-                           IsVisible="{Binding !SelectedSegment}"
-                           FontSize="16" Foreground="#555"
-                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+        <Border Background="#1A1A1A">
+            <DockPanel>
+                <!-- Waveform -->
+                <controls:WaveformControl x:Name="Waveform"
+                                          DockPanel.Dock="Top"
+                                          Height="120"
+                                          Peaks="{Binding WaveformPeaks}"
+                                          IsRecording="{Binding RecordingState, Converter={x:Static conv:RecordingStateConverters.IsRecording}}" />
 
                 <!-- Transcript display -->
-                <ScrollViewer IsVisible="{Binding TranscriptText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                <ScrollViewer Margin="16"
+                              IsVisible="{Binding TranscriptText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
                     <TextBlock Text="{Binding TranscriptText}"
                                TextWrapping="Wrap" FontSize="14" Foreground="#DDD"
                                Padding="8" />
                 </ScrollViewer>
-            </Panel>
+            </DockPanel>
         </Border>
     </DockPanel>
 </Window>
