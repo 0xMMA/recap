@@ -6,6 +6,7 @@ using Recap.Core.Audio;
 using Recap.Core.Config;
 using Recap.Core.Logging;
 using Recap.Core.Models;
+using Recap.Core.Updates;
 using Recap.Desktop.Controls;
 using Recap.Desktop.ViewModels;
 
@@ -21,7 +22,6 @@ public partial class MainWindow : Window
         InitializeComponent();
         _vm = new MainWindowViewModel();
         DataContext = _vm;
-        _vm.RecoverSession();
         Closing += (_, _) => _vm.Cleanup();
         KeyDown += OnKeyDown;
 
@@ -56,6 +56,69 @@ public partial class MainWindow : Window
             }
         };
         _waveformTimer.Start();
+    }
+
+    protected override async void OnOpened(EventArgs e)
+    {
+        base.OnOpened(e);
+
+        // Crash recovery — auto-loads previous session segments
+        _vm.RecoverSession();
+
+        // First-run: force settings if no API key
+        if (!_vm.HasApiKey)
+        {
+            var config = AppConfig.Load();
+            var settingsVm = new SettingsViewModel(config);
+            var dialog = new SettingsWindow(settingsVm);
+            var result = await dialog.ShowDialog<bool?>(this);
+            if (result == true)
+            {
+                var newConfig = settingsVm.ToConfig();
+                newConfig.Save();
+                _vm.UpdateConfig(newConfig);
+            }
+        }
+
+        // Background update check
+        _ = CheckForUpdateOnStartupAsync();
+    }
+
+    private async Task CheckForUpdateOnStartupAsync()
+    {
+        try
+        {
+            var updater = new AppUpdater();
+            var (available, version) = await updater.CheckForUpdateAsync();
+            if (available)
+                _vm.StatusText = $"Update available: v{version} — press U to update";
+        }
+        catch { } // Silent on startup
+    }
+
+    private async void CheckForUpdate()
+    {
+        _vm.StatusText = "Checking for updates...";
+        var updater = new AppUpdater();
+        var (available, version) = await updater.CheckForUpdateAsync();
+
+        if (!available)
+        {
+            _vm.StatusText = $"You're on the latest version ({updater.CurrentVersion})";
+            return;
+        }
+
+        _vm.StatusText = $"Downloading update v{version}...";
+        var success = await updater.DownloadAndApplyAsync(progress =>
+        {
+            _vm.StatusText = $"Downloading update: {progress}%";
+        });
+
+        if (!success)
+        {
+            _vm.StatusText = "Update failed";
+        }
+        // If success, app restarts — won't reach here
     }
 
     private async void OnKeyDown(object? sender, KeyEventArgs e)
@@ -152,6 +215,10 @@ public partial class MainWindow : Window
                 break;
             case Key.A when !ctrl:
                 _vm.AutoTrimCommand.Execute(null);
+                e.Handled = true;
+                break;
+            case Key.U:
+                CheckForUpdate();
                 e.Handled = true;
                 break;
             case Key.Q:
