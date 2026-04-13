@@ -58,6 +58,15 @@ public partial class MainWindowViewModel : ObservableObject
     [ObservableProperty]
     private double _trimRight = 1.0;
 
+    [ObservableProperty]
+    private double _playbackPosition = -1;
+
+    [ObservableProperty]
+    private double _selectionStart = -1;
+
+    [ObservableProperty]
+    private double _selectionEnd = -1;
+
     public ObservableCollection<SegmentViewModel> Segments { get; } = new();
 
     private string TempDir => Path.Combine(Path.GetTempPath(), "recap", _state.SessionId);
@@ -582,6 +591,89 @@ public partial class MainWindowViewModel : ObservableObject
                 WaveformPeaks = WaveformData.GetPeaks(sel.FilePath, 500);
             StatusText = $"Auto-trimmed {trimmed} segment(s)";
         }
+    }
+
+    public void UpdatePlaybackPosition()
+    {
+        PlaybackPosition = _audio.PlaybackPosition;
+        if (_audio.PlaybackPosition < 0 && RecordingState != RecordingState.Recording)
+        {
+            PlaybackPosition = -1;
+        }
+    }
+
+    [RelayCommand]
+    public void DeleteSelection()
+    {
+        if (SelectionStart < 0 || SelectionEnd < 0) return;
+        var seg = _state.GetSelected();
+        if (seg == null || !seg.HasFile) return;
+
+        double start = Math.Min(SelectionStart, SelectionEnd);
+        double end = Math.Max(SelectionStart, SelectionEnd);
+        if (end - start < 0.001) return; // Too small
+
+        try
+        {
+            DeleteAudioRange(seg, start, end);
+            WaveformData.Invalidate(seg.FilePath);
+            seg.RefreshHasFile();
+            WaveformPeaks = WaveformData.GetPeaks(seg.FilePath, 500);
+            SyncSegments();
+            SelectionStart = -1;
+            SelectionEnd = -1;
+            StatusText = "Deleted selected audio range";
+            Log.Info($"Deleted audio range [{start:P0}-{end:P0}] from segment {seg.Index + 1}");
+        }
+        catch (Exception ex)
+        {
+            StatusText = $"Delete failed: {ex.Message}";
+            Log.Error("Audio range delete failed", ex);
+        }
+    }
+
+    private void DeleteAudioRange(Segment segment, double startFraction, double endFraction)
+    {
+        var tempPath = segment.FilePath + ".cut.wav";
+        using (var stream = new FileStream(segment.FilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+        using (var reader = new WaveFileReader(stream))
+        {
+            var totalSamples = reader.SampleCount;
+            long cutStart = (long)(startFraction * totalSamples);
+            long cutEnd = (long)(endFraction * totalSamples);
+
+            using var writer = new WaveFileWriter(tempPath, reader.WaveFormat);
+            var buffer = new byte[65536];
+
+            // Write before cut
+            reader.Position = 0;
+            long beforeBytes = cutStart * reader.WaveFormat.BlockAlign;
+            long remaining = beforeBytes;
+            while (remaining > 0)
+            {
+                int toRead = (int)Math.Min(buffer.Length, remaining);
+                int read = reader.Read(buffer, 0, toRead);
+                if (read == 0) break;
+                writer.Write(buffer, 0, read);
+                remaining -= read;
+            }
+
+            // Skip cut region, write after
+            reader.Position = cutEnd * reader.WaveFormat.BlockAlign;
+            while (true)
+            {
+                int read = reader.Read(buffer, 0, buffer.Length);
+                if (read == 0) break;
+                writer.Write(buffer, 0, read);
+            }
+        }
+
+        WaveformData.Invalidate(segment.FilePath);
+        RetryFileOp(() => File.Delete(segment.FilePath));
+        File.Move(tempPath, segment.FilePath);
+
+        using var updated = new WaveFileReader(segment.FilePath);
+        segment.Duration = updated.TotalTime;
     }
 
     private static string HumanizeDuration(TimeSpan ts)

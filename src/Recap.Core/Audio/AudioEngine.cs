@@ -142,6 +142,16 @@ public class AudioEngine : IAudioEngine
     public bool IsPlaying => _waveOut?.PlaybackState == PlaybackState.Playing;
     public bool IsPaused => _waveOut?.PlaybackState == PlaybackState.Paused;
 
+    public double PlaybackPosition
+    {
+        get
+        {
+            if (_playbackReader == null || _waveOut == null) return -1;
+            if (_waveOut.PlaybackState == PlaybackState.Stopped) return -1;
+            return (double)_playbackReader.Position / _playbackReader.Length;
+        }
+    }
+
     public void Play(string filePath)
     {
         StopPlayback();

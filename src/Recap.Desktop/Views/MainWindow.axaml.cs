@@ -68,6 +68,10 @@ public partial class MainWindow : Window
                     _vm.WaveformPeaks = _vm.GetLiveWaveform(width);
                 }
             }
+            else
+            {
+                _vm.UpdatePlaybackPosition();
+            }
         };
         _waveformTimer.Start();
     }
@@ -168,7 +172,10 @@ public partial class MainWindow : Window
                 break;
             case Key.Delete:
             case Key.Back:
-                _vm.DeleteSelectedCommand.Execute(null);
+                if (_vm.SelectionStart >= 0 && _vm.SelectionEnd >= 0)
+                    _vm.DeleteSelectionCommand.Execute(null);
+                else
+                    _vm.DeleteSelectedCommand.Execute(null);
                 e.Handled = true;
                 break;
             case Key.Z when ctrl:

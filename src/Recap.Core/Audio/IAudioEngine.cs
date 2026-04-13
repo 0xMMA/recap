@@ -13,4 +13,5 @@ public interface IAudioEngine : IDisposable
     void Play(string filePath);
     void TogglePause();
     void StopPlayback();
+    double PlaybackPosition { get; }
 }

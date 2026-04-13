@@ -220,7 +220,10 @@
                                           IsRecording="{Binding RecordingState, Converter={x:Static conv:RecordingStateConverters.IsRecording}}"
                                           IsTrimMode="{Binding IsTrimMode}"
                                           TrimLeft="{Binding TrimLeft, Mode=TwoWay}"
-                                          TrimRight="{Binding TrimRight, Mode=TwoWay}" />
+                                          TrimRight="{Binding TrimRight, Mode=TwoWay}"
+                                          PlaybackPosition="{Binding PlaybackPosition}"
+                                          SelectionStart="{Binding SelectionStart, Mode=TwoWay}"
+                                          SelectionEnd="{Binding SelectionEnd, Mode=TwoWay}" />
 
                 <!-- Transcript display -->
                 <ScrollViewer Margin="16"
