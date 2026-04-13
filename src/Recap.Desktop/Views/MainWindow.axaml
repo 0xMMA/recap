@@ -1,13 +1,130 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:Recap.Desktop.ViewModels"
+        xmlns:conv="using:Recap.Desktop.Converters"
         x:Class="Recap.Desktop.Views.MainWindow"
         Title="Recap" Width="900" Height="600"
-        MinWidth="640" MinHeight="400">
+        MinWidth="640" MinHeight="400"
+        x:DataType="vm:MainWindowViewModel">
+
+    <Window.Resources>
+        <conv:DurationConverter x:Key="DurationConverter" />
+    </Window.Resources>
+
     <DockPanel>
-        <TextBlock Text="Recap — Voice Capture Tool"
-                   FontSize="20" FontWeight="Bold"
-                   HorizontalAlignment="Center"
-                   VerticalAlignment="Center"
-                   Foreground="#888" />
+        <!-- Toolbar -->
+        <Border DockPanel.Dock="Top" Background="#2D2D2D" Padding="4">
+            <StackPanel Orientation="Horizontal" Spacing="4">
+                <Button Command="{Binding ToggleRecordingCommand}"
+                        ToolTip.Tip="Record / Stop (R)"
+                        Width="36" Height="36"
+                        FontSize="16"
+                        Foreground="{Binding RecordingState, Converter={x:Static conv:RecordingStateConverters.Foreground}}"
+                        Content="{Binding RecordingState, Converter={x:Static conv:RecordingStateConverters.Icon}}" />
+                <Button Command="{Binding PlaySelectedCommand}"
+                        ToolTip.Tip="Play Selected (Enter)"
+                        Content="&#x25B6;" Width="36" Height="36" FontSize="16" />
+                <Button Command="{Binding PlayAllCommand}"
+                        ToolTip.Tip="Play All (Shift+Enter)"
+                        Content="&#x25B6;&#x25B6;" Width="36" Height="36" FontSize="14" />
+                <Button Command="{Binding TogglePauseCommand}"
+                        ToolTip.Tip="Pause (Space)"
+                        Content="&#x23F8;" Width="36" Height="36" FontSize="16" />
+
+                <Border Width="1" Background="#555" Margin="4,4" />
+
+                <Button Command="{Binding TranscribeCommand}"
+                        ToolTip.Tip="Transcribe Selected (X)"
+                        Content="X" Width="36" Height="36" FontSize="14" FontWeight="Bold" />
+                <Button Command="{Binding TranscribeAllCommand}"
+                        ToolTip.Tip="Transcribe All (Shift+X)"
+                        Content="X+" Width="36" Height="36" FontSize="12" FontWeight="Bold" />
+
+                <Border Width="1" Background="#555" Margin="4,4" />
+
+                <Button Command="{Binding CycleLanguageCommand}"
+                        ToolTip.Tip="Cycle Language (L)"
+                        Content="{Binding ActiveLanguage}"
+                        Width="48" Height="36" FontSize="14" FontWeight="Bold" />
+                <Button Command="{Binding OpenInExplorerCommand}"
+                        ToolTip.Tip="Open Folder (F)"
+                        Content="&#x1F4C2;" Width="36" Height="36" FontSize="16" />
+                <Button Command="{Binding NewSessionCommand}"
+                        ToolTip.Tip="New Session (N)"
+                        Content="&#x2795;" Width="36" Height="36" FontSize="14" />
+            </StackPanel>
+        </Border>
+
+        <!-- Status Bar -->
+        <Border DockPanel.Dock="Bottom" Background="#1E1E1E" Padding="8,4">
+            <StackPanel Orientation="Horizontal" Spacing="16">
+                <TextBlock FontSize="12"
+                           Foreground="{Binding RecordingState, Converter={x:Static conv:RecordingStateConverters.Foreground}}">
+                    <TextBlock.Text>
+                        <MultiBinding StringFormat="{}{0}">
+                            <Binding Path="RecordingState" Converter="{x:Static conv:RecordingStateConverters.StatusLabel}" />
+                        </MultiBinding>
+                    </TextBlock.Text>
+                </TextBlock>
+                <TextBlock Text="{Binding ActiveLanguage, StringFormat='Lang: {0}'}" FontSize="12" Foreground="#AAA" />
+                <TextBlock Text="{Binding SegmentCount, StringFormat='Segments: {0}'}" FontSize="12" Foreground="#AAA" />
+                <TextBlock Text="{Binding TotalDuration, StringFormat='Duration: {0}'}" FontSize="12" Foreground="#AAA" />
+                <TextBlock FontSize="12">
+                    <TextBlock.Text>
+                        <MultiBinding StringFormat="API: {0}">
+                            <Binding Path="HasApiKey" Converter="{x:Static conv:RecordingStateConverters.ApiStatus}" />
+                        </MultiBinding>
+                    </TextBlock.Text>
+                    <TextBlock.Foreground>
+                        <Binding Path="HasApiKey" Converter="{x:Static conv:RecordingStateConverters.ApiColor}" />
+                    </TextBlock.Foreground>
+                </TextBlock>
+                <TextBlock Text="{Binding StatusText}" FontSize="12" Foreground="#CCC" />
+            </StackPanel>
+        </Border>
+
+        <!-- Segment List (Left) -->
+        <Border DockPanel.Dock="Left" Width="200" Background="#252525" BorderBrush="#333" BorderThickness="0,0,1,0">
+            <ListBox ItemsSource="{Binding Segments}"
+                     SelectedItem="{Binding SelectedSegment}"
+                     Background="Transparent"
+                     SelectionMode="Single">
+                <ListBox.ItemTemplate>
+                    <DataTemplate x:DataType="vm:SegmentViewModel">
+                        <StackPanel Orientation="Horizontal" Spacing="8" Margin="4,2">
+                            <TextBlock Text="{Binding DisplayIndex, StringFormat='{}{0:D2}'}"
+                                       FontFamily="Consolas,Courier New,monospace"
+                                       FontSize="13" Foreground="#888" VerticalAlignment="Center" />
+                            <TextBlock Text="{Binding Duration}"
+                                       FontFamily="Consolas,Courier New,monospace"
+                                       FontSize="13" Foreground="#CCC" VerticalAlignment="Center" />
+                            <TextBlock Text="!"
+                                       IsVisible="{Binding !HasFile}"
+                                       Foreground="#E44" FontWeight="Bold" FontSize="13"
+                                       VerticalAlignment="Center"
+                                       ToolTip.Tip="File missing" />
+                        </StackPanel>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </Border>
+
+        <!-- Center Content -->
+        <Border Background="#1A1A1A" Padding="16">
+            <Panel>
+                <!-- Placeholder for waveform -->
+                <TextBlock Text="Select a segment"
+                           IsVisible="{Binding !SelectedSegment}"
+                           FontSize="16" Foreground="#555"
+                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+
+                <!-- Transcript display -->
+                <ScrollViewer IsVisible="{Binding TranscriptText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                    <TextBlock Text="{Binding TranscriptText}"
+                               TextWrapping="Wrap" FontSize="14" Foreground="#DDD"
+                               Padding="8" />
+                </ScrollViewer>
+            </Panel>
+        </Border>
     </DockPanel>
 </Window>
