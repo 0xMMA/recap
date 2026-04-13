@@ -343,10 +343,8 @@ public partial class MainWindowViewModel : ObservableObject
     {
         ActiveLanguage = ActiveLanguage switch
         {
-            "de" => "en",
-            "en" => "auto",
-            "auto" => "de",
-            _ => "de"
+            "auto" => _config.DefaultLanguage,
+            _ => "auto"
         };
         _state.ActiveLanguage = ActiveLanguage;
         StatusText = $"Language: {ActiveLanguage}";
@@ -370,24 +368,29 @@ public partial class MainWindowViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void OpenInExplorer()
+    public void OpenInExplorer()
     {
         try
         {
-            var dir = TempDir;
-            if (!Directory.Exists(dir))
-                Directory.CreateDirectory(dir);
-
-            Process.Start(new ProcessStartInfo
+            var seg = _state.GetSelected();
+            if (seg != null && seg.HasFile)
             {
-                FileName = dir,
-                UseShellExecute = true
-            });
-            StatusText = $"Opened: {dir}";
+                // Open explorer and select the file
+                Process.Start("explorer.exe", $"/select,\"{seg.FilePath}\"");
+                StatusText = $"Opened: {Path.GetDirectoryName(seg.FilePath)}";
+            }
+            else
+            {
+                // Open the session temp directory
+                Directory.CreateDirectory(TempDir);
+                Process.Start("explorer.exe", $"\"{TempDir}\"");
+                StatusText = $"Opened: {TempDir}";
+            }
         }
         catch (Exception ex)
         {
-            StatusText = $"Could not open folder: {ex.Message}";
+            StatusText = $"Cannot open folder: {ex.Message}";
+            Log.Error("Open in Explorer failed", ex);
         }
     }
 

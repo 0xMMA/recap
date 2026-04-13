@@ -17,20 +17,28 @@
 
         <!-- Settings form -->
         <StackPanel Spacing="12">
-            <TextBlock Text="API Key" FontWeight="SemiBold" />
-            <TextBox Text="{Binding ApiKey}" PasswordChar="*" Watermark="Enter API key" />
+            <TextBlock Text="API Key" FontWeight="SemiBold"
+                       ToolTip.Tip="Your ElevenLabs API key for speech-to-text transcription. Get one at elevenlabs.io" />
+            <TextBox Text="{Binding ApiKey}" PasswordChar="*" Watermark="Enter API key"
+                     ToolTip.Tip="Your ElevenLabs API key for speech-to-text transcription. Get one at elevenlabs.io" />
 
-            <TextBlock Text="Default Language" FontWeight="SemiBold" />
-            <TextBox Text="{Binding DefaultLanguage}" Watermark="e.g. de, en, auto" />
+            <TextBlock Text="Default Language" FontWeight="SemiBold"
+                       ToolTip.Tip="Language code for transcription (e.g., de, en, fr, it, es, auto). Use 'auto' for automatic detection." />
+            <TextBox Text="{Binding DefaultLanguage}" Watermark="e.g. de, en, auto"
+                     ToolTip.Tip="Language code for transcription (e.g., de, en, fr, it, es, auto). Use 'auto' for automatic detection." />
 
             <ToggleSwitch IsChecked="{Binding PushToTalk}"
-                          OnContent="Push-to-Talk On" OffContent="Push-to-Talk Off" />
+                          OnContent="Push-to-Talk On" OffContent="Push-to-Talk Off"
+                          ToolTip.Tip="When enabled, hold R to record instead of toggling. Release R to stop recording." />
 
             <ToggleSwitch IsChecked="{Binding AudioEvents}"
-                          OnContent="Audio Events On" OffContent="Audio Events Off" />
+                          OnContent="Audio Events On" OffContent="Audio Events Off"
+                          ToolTip.Tip="When enabled, non-speech sounds (laughter, applause, music) are tagged in the transcript." />
 
-            <TextBlock Text="Timestamp Granularity" FontWeight="SemiBold" />
-            <ComboBox SelectedItem="{Binding TimestampGranularity}" Width="200">
+            <TextBlock Text="Timestamp Granularity" FontWeight="SemiBold"
+                       ToolTip.Tip="Level of timestamp detail in transcription: none, per-segment, or per-word." />
+            <ComboBox SelectedItem="{Binding TimestampGranularity}" Width="200"
+                      ToolTip.Tip="Level of timestamp detail in transcription: none, per-segment, or per-word.">
                 <x:String>none</x:String>
                 <x:String>segment</x:String>
                 <x:String>word</x:String>
