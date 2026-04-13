@@ -29,6 +29,10 @@ public partial class MainWindow : Window
         if (settingsBtn != null)
             settingsBtn.Click += (_, _) => OpenSettings();
 
+        var saveBtn = this.FindControl<Button>("SaveButton");
+        if (saveBtn != null)
+            saveBtn.Click += (_, _) => SaveAudio();
+
         _vm.PropertyChanged += (_, e) =>
         {
             if (e.PropertyName == nameof(MainWindowViewModel.TranscriptText) && _vm.TranscriptText != null)

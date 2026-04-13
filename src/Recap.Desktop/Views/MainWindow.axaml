@@ -16,53 +16,134 @@
         <!-- Toolbar -->
         <Border DockPanel.Dock="Top" Background="#2D2D2D" Padding="4">
             <StackPanel Orientation="Horizontal" Spacing="4">
-                <Button Command="{Binding ToggleRecordingCommand}"
-                        ToolTip.Tip="Record / Stop (R)"
-                        Width="36" Height="36"
-                        FontSize="16"
-                        Foreground="{Binding RecordingState, Converter={x:Static conv:RecordingStateConverters.Foreground}}"
-                        Content="{Binding RecordingState, Converter={x:Static conv:RecordingStateConverters.Icon}}" />
-                <Button Command="{Binding PlaySelectedCommand}"
-                        ToolTip.Tip="Play Selected (Enter)"
-                        Content="&#x25B6;" Width="36" Height="36" FontSize="16" />
-                <Button Command="{Binding PlayAllCommand}"
-                        ToolTip.Tip="Play All (Shift+Enter)"
-                        Content="&#x25B6;&#x25B6;" Width="36" Height="36" FontSize="14" />
-                <Button Command="{Binding TogglePauseCommand}"
-                        ToolTip.Tip="Pause (Space)"
-                        Content="&#x23F8;" Width="36" Height="36" FontSize="16" />
+                <!-- Record -->
+                <Button Focusable="False" ToolTip.Tip="Start or stop recording (R)"
+                        Command="{Binding ToggleRecordingCommand}"
+                        MinWidth="70" Padding="8,6">
+                    <StackPanel Spacing="1" HorizontalAlignment="Center">
+                        <TextBlock Text="REC" FontSize="14" FontWeight="Bold" HorizontalAlignment="Center"
+                                   Foreground="{Binding RecordingState, Converter={x:Static conv:RecordingStateConverters.Foreground}}" />
+                        <TextBlock Text="R" FontSize="9" Foreground="#666" HorizontalAlignment="Center" />
+                    </StackPanel>
+                </Button>
 
-                <Button Command="{Binding EnterTrimModeCommand}"
-                        ToolTip.Tip="Trim (T)"
-                        Content="&#x2702;" Width="36" Height="36" FontSize="16" />
-                <Button Command="{Binding AutoTrimCommand}"
-                        ToolTip.Tip="Auto-Trim (A)"
-                        Content="AT" Width="36" Height="36" FontSize="12" FontWeight="Bold" />
+                <Border Width="1" Background="#555" Margin="2,4" />
 
-                <Border Width="1" Background="#555" Margin="4,4" />
+                <!-- Play -->
+                <Button Focusable="False" ToolTip.Tip="Play selected segment (Enter)"
+                        Command="{Binding PlaySelectedCommand}"
+                        MinWidth="70" Padding="8,6">
+                    <StackPanel Spacing="1" HorizontalAlignment="Center">
+                        <TextBlock Text="Play" FontSize="14" FontWeight="Bold" HorizontalAlignment="Center" />
+                        <TextBlock Text="Enter" FontSize="9" Foreground="#666" HorizontalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+                <!-- Play All -->
+                <Button Focusable="False" ToolTip.Tip="Play all segments spliced (Shift+Enter)"
+                        Command="{Binding PlayAllCommand}"
+                        MinWidth="70" Padding="8,6">
+                    <StackPanel Spacing="1" HorizontalAlignment="Center">
+                        <TextBlock Text="Play All" FontSize="14" FontWeight="Bold" HorizontalAlignment="Center" />
+                        <TextBlock Text="Shift+Enter" FontSize="9" Foreground="#666" HorizontalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+                <!-- Pause -->
+                <Button Focusable="False" ToolTip.Tip="Pause or resume playback (Space)"
+                        Command="{Binding TogglePauseCommand}"
+                        MinWidth="70" Padding="8,6">
+                    <StackPanel Spacing="1" HorizontalAlignment="Center">
+                        <TextBlock Text="Pause" FontSize="14" FontWeight="Bold" HorizontalAlignment="Center" />
+                        <TextBlock Text="Space" FontSize="9" Foreground="#666" HorizontalAlignment="Center" />
+                    </StackPanel>
+                </Button>
 
-                <Button Command="{Binding TranscribeCommand}"
-                        ToolTip.Tip="Transcribe Selected (X)"
-                        Content="X" Width="36" Height="36" FontSize="14" FontWeight="Bold" />
-                <Button Command="{Binding TranscribeAllCommand}"
-                        ToolTip.Tip="Transcribe All (Shift+X)"
-                        Content="X+" Width="36" Height="36" FontSize="12" FontWeight="Bold" />
+                <Border Width="1" Background="#555" Margin="2,4" />
 
-                <Border Width="1" Background="#555" Margin="4,4" />
+                <!-- Trim -->
+                <Button Focusable="False" ToolTip.Tip="Trim selected segment (T)"
+                        Command="{Binding EnterTrimModeCommand}"
+                        MinWidth="70" Padding="8,6">
+                    <StackPanel Spacing="1" HorizontalAlignment="Center">
+                        <TextBlock Text="Trim" FontSize="14" FontWeight="Bold" HorizontalAlignment="Center" />
+                        <TextBlock Text="T" FontSize="9" Foreground="#666" HorizontalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+                <!-- Auto-Trim -->
+                <Button Focusable="False" ToolTip.Tip="Auto-remove silence from selection (A)"
+                        Command="{Binding AutoTrimCommand}"
+                        MinWidth="70" Padding="8,6">
+                    <StackPanel Spacing="1" HorizontalAlignment="Center">
+                        <TextBlock Text="Auto-Trim" FontSize="14" FontWeight="Bold" HorizontalAlignment="Center" />
+                        <TextBlock Text="A" FontSize="9" Foreground="#666" HorizontalAlignment="Center" />
+                    </StackPanel>
+                </Button>
 
-                <Button Command="{Binding CycleLanguageCommand}"
-                        ToolTip.Tip="Cycle Language (L)"
-                        Content="{Binding ActiveLanguage}"
-                        Width="48" Height="36" FontSize="14" FontWeight="Bold" />
-                <Button Command="{Binding OpenInExplorerCommand}"
-                        ToolTip.Tip="Open Folder (F)"
-                        Content="&#x1F4C2;" Width="36" Height="36" FontSize="16" />
-                <Button Command="{Binding NewSessionCommand}"
-                        ToolTip.Tip="New Session (N)"
-                        Content="&#x2795;" Width="36" Height="36" FontSize="14" />
-                <Button x:Name="SettingsButton"
-                        ToolTip.Tip="Settings (Ctrl+,)"
-                        Content="&#x2699;" Width="36" Height="36" FontSize="16" />
+                <Border Width="1" Background="#555" Margin="2,4" />
+
+                <!-- Transcribe -->
+                <Button Focusable="False" ToolTip.Tip="Transcribe selected segments (X)"
+                        Command="{Binding TranscribeCommand}"
+                        MinWidth="70" Padding="8,6">
+                    <StackPanel Spacing="1" HorizontalAlignment="Center">
+                        <TextBlock Text="Transcribe" FontSize="14" FontWeight="Bold" HorizontalAlignment="Center" />
+                        <TextBlock Text="X" FontSize="9" Foreground="#666" HorizontalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+                <!-- Transcribe All -->
+                <Button Focusable="False" ToolTip.Tip="Transcribe all segments combined (Shift+X)"
+                        Command="{Binding TranscribeAllCommand}"
+                        MinWidth="70" Padding="8,6">
+                    <StackPanel Spacing="1" HorizontalAlignment="Center">
+                        <TextBlock Text="Transcribe All" FontSize="14" FontWeight="Bold" HorizontalAlignment="Center" />
+                        <TextBlock Text="Shift+X" FontSize="9" Foreground="#666" HorizontalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+                <!-- Language -->
+                <Button Focusable="False" ToolTip.Tip="Cycle transcription language (L)"
+                        Command="{Binding CycleLanguageCommand}"
+                        MinWidth="70" Padding="8,6">
+                    <StackPanel Spacing="1" HorizontalAlignment="Center">
+                        <TextBlock Text="{Binding ActiveLanguage}" FontSize="14" FontWeight="Bold" HorizontalAlignment="Center" />
+                        <TextBlock Text="L" FontSize="9" Foreground="#666" HorizontalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+
+                <Border Width="1" Background="#555" Margin="2,4" />
+
+                <!-- Save -->
+                <Button x:Name="SaveButton" Focusable="False" ToolTip.Tip="Save audio to file (S)"
+                        MinWidth="70" Padding="8,6">
+                    <StackPanel Spacing="1" HorizontalAlignment="Center">
+                        <TextBlock Text="Save" FontSize="14" FontWeight="Bold" HorizontalAlignment="Center" />
+                        <TextBlock Text="S" FontSize="9" Foreground="#666" HorizontalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+                <!-- Open Folder -->
+                <Button Focusable="False" ToolTip.Tip="Open segment folder in Explorer (F)"
+                        Command="{Binding OpenInExplorerCommand}"
+                        MinWidth="70" Padding="8,6">
+                    <StackPanel Spacing="1" HorizontalAlignment="Center">
+                        <TextBlock Text="Folder" FontSize="14" FontWeight="Bold" HorizontalAlignment="Center" />
+                        <TextBlock Text="F" FontSize="9" Foreground="#666" HorizontalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+                <!-- New -->
+                <Button Focusable="False" ToolTip.Tip="Start new recording session (N)"
+                        Command="{Binding NewSessionCommand}"
+                        MinWidth="70" Padding="8,6">
+                    <StackPanel Spacing="1" HorizontalAlignment="Center">
+                        <TextBlock Text="New" FontSize="14" FontWeight="Bold" HorizontalAlignment="Center" />
+                        <TextBlock Text="N" FontSize="9" Foreground="#666" HorizontalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+                <!-- Settings -->
+                <Button x:Name="SettingsButton" Focusable="False" ToolTip.Tip="Open settings (Ctrl+,)"
+                        MinWidth="70" Padding="8,6">
+                    <StackPanel Spacing="1" HorizontalAlignment="Center">
+                        <TextBlock Text="Settings" FontSize="14" FontWeight="Bold" HorizontalAlignment="Center" />
+                        <TextBlock Text="Ctrl+," FontSize="9" Foreground="#666" HorizontalAlignment="Center" />
+                    </StackPanel>
+                </Button>
             </StackPanel>
         </Border>
 
