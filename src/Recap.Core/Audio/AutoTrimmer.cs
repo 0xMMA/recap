@@ -1,6 +1,6 @@
 using NAudio.Wave;
 
-namespace Recap.Audio;
+namespace Recap.Core.Audio;
 
 public static class AutoTrimmer
 {

@@ -1,6 +1,6 @@
-using Recap.Models;
+using Recap.Core.Models;
 
-namespace Recap.State;
+namespace Recap.Core.State;
 
 public class SessionState
 {

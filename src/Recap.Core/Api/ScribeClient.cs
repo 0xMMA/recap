@@ -1,7 +1,7 @@
 using System.Net.Http.Headers;
 using System.Text.Json;
 
-namespace Recap.Api;
+namespace Recap.Core.Api;
 
 public class ScribeClient
 {

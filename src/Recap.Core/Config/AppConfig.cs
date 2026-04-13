@@ -1,7 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace Recap.Config;
+namespace Recap.Core.Config;
 
 public class AppConfig
 {

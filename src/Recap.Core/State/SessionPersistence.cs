@@ -1,8 +1,8 @@
 using System.Text.Json;
 using NAudio.Wave;
-using Recap.Models;
+using Recap.Core.Models;
 
-namespace Recap.State;
+namespace Recap.Core.State;
 
 public static class SessionPersistence
 {

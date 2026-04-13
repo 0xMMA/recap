@@ -1,5 +1,5 @@
 using NAudio.Wave;
-using Recap.Audio;
+using Recap.Core.Audio;
 using Shouldly;
 
 namespace Recap.Tests;

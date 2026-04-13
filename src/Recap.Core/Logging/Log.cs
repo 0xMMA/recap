@@ -1,6 +1,6 @@
-using Recap.Config;
+using Recap.Core.Config;
 
-namespace Recap.Logging;
+namespace Recap.Core.Logging;
 
 public static class Log
 {

@@ -1,9 +1,9 @@
 using NAudio.Wave;
-using Recap.Models;
+using Recap.Core.Models;
 
-namespace Recap.Audio;
+namespace Recap.Core.Audio;
 
-public class AudioEngine : IDisposable
+public class AudioEngine : IAudioEngine
 {
     public const int SampleRate = 16000;
     public const int BitsPerSample = 16;

@@ -1,4 +1,4 @@
-namespace Recap.Models;
+namespace Recap.Core.Models;
 
 public enum AppMode
 {

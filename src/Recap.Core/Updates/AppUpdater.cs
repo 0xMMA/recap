@@ -1,7 +1,7 @@
 using Velopack;
 using Velopack.Sources;
 
-namespace Recap.Updates;
+namespace Recap.Core.Updates;
 
 public class AppUpdater
 {

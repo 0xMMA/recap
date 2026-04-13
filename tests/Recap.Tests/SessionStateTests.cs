@@ -1,5 +1,5 @@
-using Recap.Models;
-using Recap.State;
+using Recap.Core.Models;
+using Recap.Core.State;
 using Shouldly;
 
 namespace Recap.Tests;

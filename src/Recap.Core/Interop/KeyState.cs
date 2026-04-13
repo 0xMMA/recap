@@ -1,6 +1,6 @@
 using System.Runtime.InteropServices;
 
-namespace Recap.Interop;
+namespace Recap.Core.Interop;
 
 public static class KeyState
 {
