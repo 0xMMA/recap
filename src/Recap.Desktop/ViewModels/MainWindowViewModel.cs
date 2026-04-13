@@ -35,7 +35,7 @@ public partial class MainWindowViewModel : ObservableObject
     private int _segmentCount;
 
     [ObservableProperty]
-    private string _totalDuration = "00:00:00";
+    private string _totalDuration = "0s";
 
     [ObservableProperty]
     private bool _hasApiKey;
@@ -374,7 +374,7 @@ public partial class MainWindowViewModel : ObservableObject
                 FileName = dir,
                 UseShellExecute = true
             });
-            StatusText = "Opened folder";
+            StatusText = $"Opened: {dir}";
         }
         catch (Exception ex)
         {
@@ -401,7 +401,7 @@ public partial class MainWindowViewModel : ObservableObject
             Segments.Add(new SegmentViewModel(seg));
 
         SegmentCount = _state.Segments.Count;
-        TotalDuration = _state.TotalDuration.ToString(@"hh\:mm\:ss");
+        TotalDuration = HumanizeDuration(_state.TotalDuration);
 
         if (_state.Segments.Count > 0 && _state.SelectedIndex < Segments.Count)
             SelectedSegment = Segments[_state.SelectedIndex];
@@ -582,6 +582,17 @@ public partial class MainWindowViewModel : ObservableObject
                 WaveformPeaks = WaveformData.GetPeaks(sel.FilePath, 500);
             StatusText = $"Auto-trimmed {trimmed} segment(s)";
         }
+    }
+
+    private static string HumanizeDuration(TimeSpan ts)
+    {
+        if (ts.TotalHours >= 1)
+            return $"{(int)ts.TotalHours}h {ts.Minutes}m";
+        if (ts.TotalMinutes >= 1)
+            return $"{(int)ts.TotalMinutes}m {ts.Seconds}s";
+        if (ts.TotalSeconds >= 1)
+            return $"~{(int)ts.TotalSeconds}s";
+        return "0s";
     }
 
     public void Cleanup()

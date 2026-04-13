@@ -1,5 +1,6 @@
 using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using Recap.Core.Audio;
@@ -16,6 +17,7 @@ public partial class MainWindow : Window
 {
     private readonly MainWindowViewModel _vm;
     private readonly DispatcherTimer _waveformTimer;
+    private bool _rKeyHeld;
 
     public MainWindow()
     {
@@ -24,6 +26,7 @@ public partial class MainWindow : Window
         DataContext = _vm;
         Closing += (_, _) => _vm.Cleanup();
         KeyDown += OnKeyDown;
+        KeyUp += OnKeyUp;
 
         var settingsBtn = this.FindControl<Button>("SettingsButton");
         if (settingsBtn != null)
@@ -45,6 +48,13 @@ public partial class MainWindow : Window
                 });
             }
         };
+
+        var versionText = this.FindControl<TextBlock>("VersionText");
+        if (versionText != null)
+        {
+            var version = typeof(MainWindow).Assembly.GetName().Version?.ToString(3) ?? "dev";
+            versionText.Text = $"v{version}";
+        }
 
         _waveformTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(66) };
         _waveformTimer.Tick += (_, _) =>
@@ -133,7 +143,11 @@ public partial class MainWindow : Window
         switch (e.Key)
         {
             case Key.R when !ctrl:
-                _vm.ToggleRecordingCommand.Execute(null);
+                if (!_rKeyHeld)
+                {
+                    _rKeyHeld = true;
+                    _vm.ToggleRecordingCommand.Execute(null);
+                }
                 e.Handled = true;
                 break;
             case Key.Up when shift:
@@ -230,6 +244,30 @@ public partial class MainWindow : Window
                 e.Handled = true;
                 break;
         }
+    }
+
+    private void OnKeyUp(object? sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.R)
+        {
+            if (_rKeyHeld && _vm.RecordingState == RecordingState.Recording && IsPushToTalk())
+            {
+                _vm.ToggleRecordingCommand.Execute(null);
+            }
+            _rKeyHeld = false;
+            e.Handled = true;
+        }
+    }
+
+    private bool IsPushToTalk() => AppConfig.Load().PushToTalk;
+
+    private void GitHub_Click(object? sender, RoutedEventArgs e)
+    {
+        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+        {
+            FileName = "https://github.com/0xMMA/recap",
+            UseShellExecute = true
+        });
     }
 
     private async void OpenSettings()

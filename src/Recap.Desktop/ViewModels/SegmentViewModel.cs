@@ -11,7 +11,18 @@ public partial class SegmentViewModel : ObservableObject
 
     public Segment Model => _segment;
     public int DisplayIndex => _segment.Index + 1;
-    public string Duration => _segment.Duration.ToString(@"mm\:ss\.f");
+    public string Duration
+    {
+        get
+        {
+            var ts = _segment.Duration;
+            if (ts.TotalHours >= 1)
+                return $"{(int)ts.TotalHours}h {ts.Minutes}m";
+            if (ts.TotalMinutes >= 1)
+                return $"{(int)ts.TotalMinutes}m {ts.Seconds}s";
+            return $"~{(int)ts.TotalSeconds}s";
+        }
+    }
     public string FilePath => _segment.FilePath;
     public bool HasFile => _segment.HasFile;
 

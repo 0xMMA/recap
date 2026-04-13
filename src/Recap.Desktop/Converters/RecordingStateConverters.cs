@@ -52,9 +52,9 @@ public static class RecordingStateConverters
                 {
                     RecordingState.Recording => "\u25CF REC",
                     RecordingState.Paused => "\u23F8 PAUSED",
-                    _ => "\u25A0 IDLE"
+                    _ => "Ready"
                 }
-                : "\u25A0 IDLE";
+                : "Ready";
         }
 
         public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)

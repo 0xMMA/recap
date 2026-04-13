@@ -149,30 +149,38 @@
 
         <!-- Status Bar -->
         <Border DockPanel.Dock="Bottom" Background="#1E1E1E" Padding="8,4">
-            <StackPanel Orientation="Horizontal" Spacing="16">
-                <TextBlock FontSize="12"
-                           Foreground="{Binding RecordingState, Converter={x:Static conv:RecordingStateConverters.Foreground}}">
-                    <TextBlock.Text>
-                        <MultiBinding StringFormat="{}{0}">
-                            <Binding Path="RecordingState" Converter="{x:Static conv:RecordingStateConverters.StatusLabel}" />
-                        </MultiBinding>
-                    </TextBlock.Text>
-                </TextBlock>
-                <TextBlock Text="{Binding ActiveLanguage, StringFormat='Lang: {0}'}" FontSize="12" Foreground="#AAA" />
-                <TextBlock Text="{Binding SegmentCount, StringFormat='Segments: {0}'}" FontSize="12" Foreground="#AAA" />
-                <TextBlock Text="{Binding TotalDuration, StringFormat='Duration: {0}'}" FontSize="12" Foreground="#AAA" />
-                <TextBlock FontSize="12">
-                    <TextBlock.Text>
-                        <MultiBinding StringFormat="API: {0}">
-                            <Binding Path="HasApiKey" Converter="{x:Static conv:RecordingStateConverters.ApiStatus}" />
-                        </MultiBinding>
-                    </TextBlock.Text>
-                    <TextBlock.Foreground>
-                        <Binding Path="HasApiKey" Converter="{x:Static conv:RecordingStateConverters.ApiColor}" />
-                    </TextBlock.Foreground>
-                </TextBlock>
-                <TextBlock Text="{Binding StatusText}" FontSize="12" Foreground="#CCC" />
-            </StackPanel>
+            <DockPanel>
+                <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right" DockPanel.Dock="Right">
+                    <TextBlock x:Name="VersionText" Foreground="#666" FontSize="10" VerticalAlignment="Center" />
+                    <Button Content="GitHub" Focusable="False" FontSize="10" Padding="4,2"
+                            Background="Transparent" Foreground="#888" Cursor="Hand"
+                            Click="GitHub_Click" />
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Spacing="16">
+                    <TextBlock FontSize="12"
+                               Foreground="{Binding RecordingState, Converter={x:Static conv:RecordingStateConverters.Foreground}}">
+                        <TextBlock.Text>
+                            <MultiBinding StringFormat="{}{0}">
+                                <Binding Path="RecordingState" Converter="{x:Static conv:RecordingStateConverters.StatusLabel}" />
+                            </MultiBinding>
+                        </TextBlock.Text>
+                    </TextBlock>
+                    <TextBlock Text="{Binding ActiveLanguage, StringFormat='Lang: {0}'}" FontSize="12" Foreground="#AAA" />
+                    <TextBlock Text="{Binding SegmentCount, StringFormat='Segments: {0}'}" FontSize="12" Foreground="#AAA" />
+                    <TextBlock Text="{Binding TotalDuration, StringFormat='Duration: {0}'}" FontSize="12" Foreground="#AAA" />
+                    <TextBlock FontSize="12">
+                        <TextBlock.Text>
+                            <MultiBinding StringFormat="API: {0}">
+                                <Binding Path="HasApiKey" Converter="{x:Static conv:RecordingStateConverters.ApiStatus}" />
+                            </MultiBinding>
+                        </TextBlock.Text>
+                        <TextBlock.Foreground>
+                            <Binding Path="HasApiKey" Converter="{x:Static conv:RecordingStateConverters.ApiColor}" />
+                        </TextBlock.Foreground>
+                    </TextBlock>
+                    <TextBlock Text="{Binding StatusText}" FontSize="12" Foreground="#CCC" />
+                </StackPanel>
+            </DockPanel>
         </Border>
 
         <!-- Segment List (Left) -->
