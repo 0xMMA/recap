@@ -8,8 +8,13 @@ public class AppUpdater
     private const string RepoUrl = "https://github.com/0xMMA/recap";
     private UpdateManager? _manager;
 
+    private System.Reflection.Assembly? _appAssembly;
+
     public string CurrentVersion =>
-        typeof(AppUpdater).Assembly.GetName().Version?.ToString(3) ?? "dev";
+        (_appAssembly ?? typeof(AppUpdater).Assembly).GetName().Version?.ToString(3) ?? "dev";
+
+    /// Set the main app assembly so version reads from Desktop, not Core
+    public void SetAppAssembly(System.Reflection.Assembly assembly) => _appAssembly = assembly;
 
     private UpdateManager GetManager()
     {

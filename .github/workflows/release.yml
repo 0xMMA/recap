@@ -38,10 +38,15 @@ jobs:
       - name: Set version in csproj
         shell: pwsh
         run: |
-          $csproj = 'src/Recap.Desktop/Recap.Desktop.csproj'
-          $content = Get-Content $csproj -Raw
-          $content = $content -replace '<Version>.*?</Version>', "<Version>${{ steps.version.outputs.VERSION }}</Version>"
-          Set-Content $csproj $content
+          foreach ($csproj in @('src/Recap.Desktop/Recap.Desktop.csproj', 'src/Recap.Core/Recap.Core.csproj')) {
+            $content = Get-Content $csproj -Raw
+            if ($content -match '<Version>') {
+              $content = $content -replace '<Version>.*?</Version>', "<Version>${{ steps.version.outputs.VERSION }}</Version>"
+            } else {
+              $content = $content -replace '</PropertyGroup>', "  <Version>${{ steps.version.outputs.VERSION }}</Version>`n  </PropertyGroup>"
+            }
+            Set-Content $csproj $content
+          }
 
       - name: Restore
         run: dotnet restore

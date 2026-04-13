@@ -113,7 +113,7 @@ public partial class MainWindow : Window
     {
         try
         {
-            var updater = new AppUpdater();
+            var updater = CreateUpdater();
             var (available, version) = await updater.CheckForUpdateAsync();
             if (available)
                 _vm.StatusText = $"Update available: v{version} — press U to update";
@@ -124,7 +124,7 @@ public partial class MainWindow : Window
     private async void CheckForUpdate()
     {
         _vm.StatusText = "Checking for updates...";
-        var updater = new AppUpdater();
+        var updater = CreateUpdater();
         var (available, version) = await updater.CheckForUpdateAsync();
 
         if (!available)
@@ -303,6 +303,13 @@ public partial class MainWindow : Window
         {
             _syncingSelection = false;
         }
+    }
+
+    private static AppUpdater CreateUpdater()
+    {
+        var updater = new AppUpdater();
+        updater.SetAppAssembly(typeof(MainWindow).Assembly);
+        return updater;
     }
 
     private void GitHub_Click(object? sender, RoutedEventArgs e)
