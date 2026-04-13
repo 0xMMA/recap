@@ -1,6 +1,7 @@
 <Solution>
   <Folder Name="/src/">
     <Project Path="src/Recap.Core/Recap.Core.csproj" />
+    <Project Path="src/Recap.Desktop/Recap.Desktop.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Recap.Tests/Recap.Tests.csproj" />
