@@ -47,6 +47,10 @@ public partial class MainWindow : Window
                     _vm.TranscriptText = null;
                 });
             }
+            else if (e.PropertyName == nameof(MainWindowViewModel.SelectedSegment))
+            {
+                Dispatcher.UIThread.Post(SyncListBoxSelection);
+            }
         };
 
         var versionText = this.FindControl<TextBlock>("VersionText");
@@ -270,6 +274,36 @@ public partial class MainWindow : Window
     }
 
     private bool IsPushToTalk() => AppConfig.Load().PushToTalk;
+
+    private bool _syncingSelection;
+
+    private void SegmentList_SelectionChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        if (_syncingSelection) return;
+        if (sender is ListBox lb && lb.SelectedIndex >= 0)
+        {
+            _vm.SetSelectedIndex(lb.SelectedIndex);
+        }
+    }
+
+    private void SyncListBoxSelection()
+    {
+        var segmentList = this.FindControl<ListBox>("SegmentList");
+        if (segmentList == null) return;
+
+        _syncingSelection = true;
+        try
+        {
+            if (_vm.SelectedSegment != null)
+                segmentList.SelectedItem = _vm.SelectedSegment;
+            else
+                segmentList.SelectedIndex = -1;
+        }
+        finally
+        {
+            _syncingSelection = false;
+        }
+    }
 
     private void GitHub_Click(object? sender, RoutedEventArgs e)
     {

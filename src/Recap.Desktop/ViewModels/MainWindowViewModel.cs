@@ -401,24 +401,47 @@ public partial class MainWindowViewModel : ObservableObject
         }
     }
 
+    public void SetSelectedIndex(int index)
+    {
+        _state.SelectedIndex = index;
+        _state.SelectionAnchor = -1; // Reset multi-select on click
+        UpdateSelectedFromState();
+    }
+
     public void MoveSelection(int delta)
     {
         _state.MoveSelection(delta);
-        SyncSegments();
+        UpdateSelectedFromState();
     }
 
     public void ExtendSelection(int delta)
     {
         _state.ExtendSelection(delta);
-        SyncSegments();
+        UpdateSelectedFromState();
     }
 
+    /// <summary>
+    /// Rebuilds the Segments ObservableCollection from SessionState.
+    /// Call only after actual segment mutations (add, delete, trim, new session).
+    /// </summary>
     public void SyncSegments()
     {
         Segments.Clear();
         foreach (var seg in _state.Segments)
             Segments.Add(new SegmentViewModel(seg));
 
+        SegmentCount = _state.Segments.Count;
+        TotalDuration = HumanizeDuration(_state.TotalDuration);
+
+        UpdateSelectedFromState();
+    }
+
+    /// <summary>
+    /// Syncs the SelectedSegment property to match _state.SelectedIndex
+    /// without rebuilding the collection.
+    /// </summary>
+    private void UpdateSelectedFromState()
+    {
         SegmentCount = _state.Segments.Count;
         TotalDuration = HumanizeDuration(_state.TotalDuration);
 
