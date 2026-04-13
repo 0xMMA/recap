@@ -36,8 +36,9 @@
                         <TextBlock Text="R" FontSize="9" Foreground="#555"
                                    HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-2,-2,0" />
                         <StackPanel Spacing="0" HorizontalAlignment="Center" VerticalAlignment="Center">
-                            <TextBlock Text="&#x23FA;" FontSize="18" HorizontalAlignment="Center"
-                                       Foreground="{Binding RecordingState, Converter={x:Static conv:RecordingStateConverters.Foreground}}" />
+                            <Border Width="18" Height="18" HorizontalAlignment="Center">
+                                <Ellipse Width="14" Height="14" Fill="{Binding RecordingState, Converter={x:Static conv:RecordingStateConverters.Foreground}}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
                             <TextBlock Text="Record" FontSize="9" HorizontalAlignment="Center" Foreground="#CCC" />
                         </StackPanel>
                     </Grid>
@@ -52,7 +53,9 @@
                         <TextBlock Text="&#x23CE;" FontSize="9" Foreground="#555"
                                    HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-2,-2,0" />
                         <StackPanel Spacing="0" HorizontalAlignment="Center" VerticalAlignment="Center">
-                            <TextBlock Text="&#x25B6;" FontSize="18" HorizontalAlignment="Center" />
+                            <Border Width="18" Height="18" HorizontalAlignment="Center">
+                                <Path Data="M 2,0 L 14,8 L 2,16 Z" Fill="#DDD" Width="14" Height="16" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
                             <TextBlock Text="Play" FontSize="9" HorizontalAlignment="Center" Foreground="#CCC" />
                         </StackPanel>
                     </Grid>
@@ -64,7 +67,9 @@
                         <TextBlock Text="&#x21E7;&#x23CE;" FontSize="9" Foreground="#555"
                                    HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-2,-2,0" />
                         <StackPanel Spacing="0" HorizontalAlignment="Center" VerticalAlignment="Center">
-                            <TextBlock Text="&#x23E9;" FontSize="18" HorizontalAlignment="Center" />
+                            <Border Width="18" Height="18" HorizontalAlignment="Center">
+                                <Path Data="M 0,0 L 7,8 L 0,16 Z M 7,0 L 14,8 L 7,16 Z" Fill="#DDD" Width="14" Height="16" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
                             <TextBlock Text="Play All" FontSize="9" HorizontalAlignment="Center" Foreground="#CCC" />
                         </StackPanel>
                     </Grid>
@@ -76,7 +81,9 @@
                         <TextBlock Text="&#x2423;" FontSize="9" Foreground="#555"
                                    HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-2,-2,0" />
                         <StackPanel Spacing="0" HorizontalAlignment="Center" VerticalAlignment="Center">
-                            <TextBlock Text="&#x23F8;" FontSize="18" HorizontalAlignment="Center" />
+                            <Border Width="18" Height="18" HorizontalAlignment="Center">
+                                <Path Data="M 1,0 L 5,0 L 5,16 L 1,16 Z M 9,0 L 13,0 L 13,16 L 9,16 Z" Fill="#DDD" Width="14" Height="16" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
                             <TextBlock Text="Pause" FontSize="9" HorizontalAlignment="Center" Foreground="#CCC" />
                         </StackPanel>
                     </Grid>
@@ -91,7 +98,11 @@
                         <TextBlock Text="T" FontSize="9" Foreground="#555"
                                    HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-2,-2,0" />
                         <StackPanel Spacing="0" HorizontalAlignment="Center" VerticalAlignment="Center">
-                            <TextBlock Text="&#x2702;" FontSize="18" HorizontalAlignment="Center" />
+                            <Border Width="18" Height="18" HorizontalAlignment="Center">
+                                <Border BorderBrush="#DDD" BorderThickness="1.5" CornerRadius="2" Padding="3,0" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                    <TextBlock Text="T" FontSize="12" FontWeight="Bold" Foreground="#DDD" />
+                                </Border>
+                            </Border>
                             <TextBlock Text="Trim" FontSize="9" HorizontalAlignment="Center" Foreground="#CCC" />
                         </StackPanel>
                     </Grid>
@@ -105,7 +116,9 @@
                         <TextBlock Text="A" FontSize="9" Foreground="#555"
                                    HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-2,-2,0" />
                         <StackPanel Spacing="0" HorizontalAlignment="Center" VerticalAlignment="Center">
-                            <TextBlock Text="&#x26A1;" FontSize="18" HorizontalAlignment="Center" />
+                            <Border Width="18" Height="18" HorizontalAlignment="Center">
+                                <Path Data="M 8,0 L 3,9 L 7,9 L 5,16 L 13,6 L 9,6 L 12,0 Z" Fill="#DDD" Width="14" Height="16" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
                             <TextBlock Text="Auto Trim" FontSize="9" HorizontalAlignment="Center" Foreground="#CCC" />
                         </StackPanel>
                     </Grid>
@@ -120,7 +133,13 @@
                         <TextBlock Text="X" FontSize="9" Foreground="#555"
                                    HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-2,-2,0" />
                         <StackPanel Spacing="0" HorizontalAlignment="Center" VerticalAlignment="Center">
-                            <TextBlock Text="Tx" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center" />
+                            <Border Width="18" Height="18" HorizontalAlignment="Center">
+                                <StackPanel Spacing="2" HorizontalAlignment="Center" VerticalAlignment="Center" Width="14">
+                                    <Border Height="2" Background="#DDD" />
+                                    <Border Height="2" Background="#DDD" Margin="0,0,3,0" />
+                                    <Border Height="2" Background="#DDD" Margin="0,0,6,0" />
+                                </StackPanel>
+                            </Border>
                             <TextBlock Text="Transcribe" FontSize="9" HorizontalAlignment="Center" Foreground="#CCC" />
                         </StackPanel>
                     </Grid>
@@ -132,7 +151,9 @@
                         <TextBlock Text="&#x21E7;X" FontSize="9" Foreground="#555"
                                    HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-2,-2,0" />
                         <StackPanel Spacing="0" HorizontalAlignment="Center" VerticalAlignment="Center">
-                            <TextBlock Text="TX" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center" />
+                            <Border Width="18" Height="18" HorizontalAlignment="Center">
+                                <TextBlock Text="TX" FontSize="14" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
                             <TextBlock Text="TX All" FontSize="9" HorizontalAlignment="Center" Foreground="#CCC" />
                         </StackPanel>
                     </Grid>
@@ -144,7 +165,9 @@
                         <TextBlock Text="L" FontSize="9" Foreground="#555"
                                    HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-2,-2,0" />
                         <StackPanel Spacing="0" HorizontalAlignment="Center" VerticalAlignment="Center">
-                            <TextBlock Text="{Binding ActiveLanguage}" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center" />
+                            <Border Width="18" Height="18" HorizontalAlignment="Center">
+                                <TextBlock Text="{Binding ActiveLanguage}" FontSize="14" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
                             <TextBlock Text="Lang" FontSize="9" HorizontalAlignment="Center" Foreground="#CCC" />
                         </StackPanel>
                     </Grid>
@@ -158,7 +181,9 @@
                         <TextBlock Text="S" FontSize="9" Foreground="#555"
                                    HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-2,-2,0" />
                         <StackPanel Spacing="0" HorizontalAlignment="Center" VerticalAlignment="Center">
-                            <TextBlock Text="&#x2B07;" FontSize="18" HorizontalAlignment="Center" />
+                            <Border Width="18" Height="18" HorizontalAlignment="Center">
+                                <Path Data="M 3,0 L 3,8 L 0,8 L 7,14 L 14,8 L 11,8 L 11,0 Z M 0,15 L 14,15 L 14,16 L 0,16 Z" Fill="#DDD" Width="14" Height="16" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
                             <TextBlock Text="Save" FontSize="9" HorizontalAlignment="Center" Foreground="#CCC" />
                         </StackPanel>
                     </Grid>
@@ -170,7 +195,9 @@
                         <TextBlock Text="F" FontSize="9" Foreground="#555"
                                    HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-2,-2,0" />
                         <StackPanel Spacing="0" HorizontalAlignment="Center" VerticalAlignment="Center">
-                            <TextBlock Text="&#x25B8;" FontSize="18" HorizontalAlignment="Center" />
+                            <Border Width="18" Height="18" HorizontalAlignment="Center">
+                                <Path Data="M 0,3 L 5,3 L 7,1 L 14,1 L 14,14 L 0,14 Z" Fill="#DDD" Width="14" Height="14" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
                             <TextBlock Text="Folder" FontSize="9" HorizontalAlignment="Center" Foreground="#CCC" />
                         </StackPanel>
                     </Grid>
@@ -182,7 +209,9 @@
                         <TextBlock Text="N" FontSize="9" Foreground="#555"
                                    HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-2,-2,0" />
                         <StackPanel Spacing="0" HorizontalAlignment="Center" VerticalAlignment="Center">
-                            <TextBlock Text="+" FontSize="18" HorizontalAlignment="Center" />
+                            <Border Width="18" Height="18" HorizontalAlignment="Center">
+                                <Path Data="M 6,0 L 8,0 L 8,6 L 14,6 L 14,8 L 8,8 L 8,14 L 6,14 L 6,8 L 0,8 L 0,6 L 6,6 Z" Fill="#DDD" Width="14" Height="14" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
                             <TextBlock Text="New" FontSize="9" HorizontalAlignment="Center" Foreground="#CCC" />
                         </StackPanel>
                     </Grid>
@@ -193,7 +222,9 @@
                         <TextBlock Text="&#x2318;," FontSize="9" Foreground="#555"
                                    HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-2,-2,0" />
                         <StackPanel Spacing="0" HorizontalAlignment="Center" VerticalAlignment="Center">
-                            <TextBlock Text="&#x2699;" FontSize="18" HorizontalAlignment="Center" />
+                            <Border Width="18" Height="18" HorizontalAlignment="Center">
+                                <Path Data="M 6,0 L 8,0 L 8,2 L 10,3 L 12,1 L 13,2 L 11,4 L 12,6 L 14,6 L 14,8 L 12,8 L 11,10 L 13,12 L 12,13 L 10,11 L 8,12 L 8,14 L 6,14 L 6,12 L 4,11 L 2,13 L 1,12 L 3,10 L 2,8 L 0,8 L 0,6 L 2,6 L 3,4 L 1,2 L 2,1 L 4,3 L 6,2 Z" Fill="#DDD" Width="14" Height="14" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
                             <TextBlock Text="Settings" FontSize="9" HorizontalAlignment="Center" Foreground="#CCC" />
                         </StackPanel>
                     </Grid>
@@ -214,7 +245,7 @@
                             ToolTip.Tip="Open project on GitHub"
                             Click="GitHub_Click">
                         <StackPanel Orientation="Horizontal" Spacing="4">
-                            <TextBlock Text="&#x27E8;/&#x27E9;" FontSize="11" VerticalAlignment="Center" />
+                            <TextBlock Text="&lt;/&gt;" FontFamily="Consolas,Courier New,monospace" FontSize="11" VerticalAlignment="Center" />
                         </StackPanel>
                     </Button>
                 </StackPanel>
