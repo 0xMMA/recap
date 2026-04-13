@@ -62,6 +62,11 @@ public partial class MainWindowViewModel : ObservableObject
     private double _playbackPosition = -1;
 
     [ObservableProperty]
+    private int _playingSegmentIndex = -1;
+
+    private bool _isPlayingSingle;
+
+    [ObservableProperty]
     private double _selectionStart = -1;
 
     [ObservableProperty]
@@ -173,6 +178,7 @@ public partial class MainWindowViewModel : ObservableObject
 
         try
         {
+            _isPlayingSingle = true;
             _audio.Play(segment.FilePath);
             StatusText = $"Playing segment {segment.Index + 1}";
         }
@@ -199,6 +205,7 @@ public partial class MainWindowViewModel : ObservableObject
 
         try
         {
+            _isPlayingSingle = false;
             var splicedPath = Path.Combine(TempDir, "_spliced_playback.wav");
             Directory.CreateDirectory(TempDir);
             AudioEngine.SpliceSegments(validFiles, splicedPath);
@@ -603,6 +610,43 @@ public partial class MainWindowViewModel : ObservableObject
         {
             PlaybackPosition = -1;
         }
+    }
+
+    public void UpdatePlayingSegment()
+    {
+        if (!_audio.IsPlaying && !_audio.IsPaused)
+        {
+            PlayingSegmentIndex = -1;
+            return;
+        }
+
+        var pos = _audio.PlaybackPosition;
+        if (pos < 0) { PlayingSegmentIndex = -1; return; }
+
+        // During single segment playback
+        if (_isPlayingSingle)
+        {
+            var selected = _state.GetSelected();
+            if (selected != null)
+                PlayingSegmentIndex = selected.Index;
+            return;
+        }
+
+        // During play-all: find which segment based on cumulative duration
+        var totalDuration = _state.TotalDuration.TotalSeconds;
+        if (totalDuration <= 0) return;
+        var currentTime = pos * totalDuration;
+        double cumulative = 0;
+        foreach (var seg in _state.Segments)
+        {
+            cumulative += seg.Duration.TotalSeconds;
+            if (currentTime <= cumulative)
+            {
+                PlayingSegmentIndex = seg.Index;
+                return;
+            }
+        }
+        PlayingSegmentIndex = _state.Segments.Count - 1;
     }
 
     [RelayCommand]

@@ -71,6 +71,9 @@ public partial class MainWindow : Window
             else
             {
                 _vm.UpdatePlaybackPosition();
+                _vm.UpdatePlayingSegment();
+                foreach (var seg in _vm.Segments)
+                    seg.IsPlaying = seg.Model.Index == _vm.PlayingSegmentIndex;
             }
         };
         _waveformTimer.Start();

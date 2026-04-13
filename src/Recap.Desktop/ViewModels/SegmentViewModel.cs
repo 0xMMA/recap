@@ -9,6 +9,9 @@ public partial class SegmentViewModel : ObservableObject
 
     public SegmentViewModel(Segment segment) => _segment = segment;
 
+    [ObservableProperty]
+    private bool _isPlaying;
+
     public Segment Model => _segment;
     public int DisplayIndex => _segment.Index + 1;
     public string Duration
