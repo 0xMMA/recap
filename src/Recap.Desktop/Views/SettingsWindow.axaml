@@ -2,7 +2,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:Recap.Desktop.ViewModels"
         x:Class="Recap.Desktop.Views.SettingsWindow"
-        Title="Settings" Width="400" Height="400"
+        Title="Settings" Width="400" Height="540"
         CanResize="False"
         WindowStartupLocation="CenterOwner"
         x:DataType="vm:SettingsViewModel">
@@ -43,6 +43,37 @@
                 <x:String>segment</x:String>
                 <x:String>word</x:String>
             </ComboBox>
+
+            <Border Height="1" Background="#444" Margin="0,4" />
+
+            <TextBlock Text="Auto-Trim Settings" FontWeight="SemiBold" />
+
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <TextBlock Text="Min Silence (ms):" VerticalAlignment="Center" Width="130"
+                           ToolTip.Tip="Minimum silence duration in milliseconds to be removed (default: 600)" />
+                <NumericUpDown Value="{Binding AutoTrimMinSilenceMs}" Minimum="100" Maximum="5000" Increment="100" Width="120"
+                               ToolTip.Tip="Minimum silence duration in milliseconds to be removed (default: 600)" />
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <TextBlock Text="Padding (ms):" VerticalAlignment="Center" Width="130"
+                           ToolTip.Tip="Padding in milliseconds kept around speech regions (default: 200)" />
+                <NumericUpDown Value="{Binding AutoTrimPaddingMs}" Minimum="0" Maximum="2000" Increment="50" Width="120"
+                               ToolTip.Tip="Padding in milliseconds kept around speech regions (default: 200)" />
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <TextBlock Text="Noise Floor (dBFS):" VerticalAlignment="Center" Width="130"
+                           ToolTip.Tip="Maximum noise floor threshold in dBFS. Files with higher noise floors are rejected (default: -30)" />
+                <NumericUpDown Value="{Binding AutoTrimNoiseFloorDb}" Minimum="-80" Maximum="0" Increment="5"
+                               FormatString="F0" Width="120"
+                               ToolTip.Tip="Maximum noise floor threshold in dBFS. Files with higher noise floors are rejected (default: -30)" />
+            </StackPanel>
+
+            <Border Height="1" Background="#444" Margin="0,4" />
+
+            <Button Content="Check for Updates" Click="CheckUpdates_Click" HorizontalAlignment="Left"
+                    ToolTip.Tip="Check if a newer version of Recap is available" />
         </StackPanel>
     </DockPanel>
 </Window>

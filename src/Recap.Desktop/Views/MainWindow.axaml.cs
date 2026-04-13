@@ -1,6 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Media;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using Recap.Core.Audio;
@@ -53,11 +54,11 @@ public partial class MainWindow : Window
             }
         };
 
-        var versionText = this.FindControl<TextBlock>("VersionText");
-        if (versionText != null)
+        var versionButton = this.FindControl<Button>("VersionButton");
+        if (versionButton != null)
         {
             var version = typeof(MainWindow).Assembly.GetName().Version?.ToString(3) ?? "dev";
-            versionText.Text = $"v{version}";
+            versionButton.Content = $"v{version}";
         }
 
         _waveformTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(16) }; // ~60fps for smooth playback indicator
@@ -116,7 +117,15 @@ public partial class MainWindow : Window
             var updater = CreateUpdater();
             var (available, version) = await updater.CheckForUpdateAsync();
             if (available)
-                _vm.StatusText = $"Update available: v{version} — press U to update";
+            {
+                _vm.StatusText = $"Update available: v{version} — click version or press U";
+                var versionButton = this.FindControl<Button>("VersionButton");
+                if (versionButton != null)
+                {
+                    versionButton.Content = $"v{updater.CurrentVersion} \u2192 v{version}";
+                    versionButton.Foreground = new SolidColorBrush(Color.Parse("#4ecdc4"));
+                }
+            }
         }
         catch { } // Silent on startup
     }
@@ -310,6 +319,21 @@ public partial class MainWindow : Window
         var updater = new AppUpdater();
         updater.SetAppAssembly(typeof(MainWindow).Assembly);
         return updater;
+    }
+
+    private void Version_Click(object? sender, RoutedEventArgs e)
+    {
+        CheckForUpdate();
+    }
+
+    private void AutoTrimPreview_Enter(object? sender, PointerEventArgs e)
+    {
+        _vm.ComputeAutoTrimPreview();
+    }
+
+    private void AutoTrimPreview_Exit(object? sender, PointerEventArgs e)
+    {
+        _vm.AutoTrimPreview = null;
     }
 
     private void GitHub_Click(object? sender, RoutedEventArgs e)

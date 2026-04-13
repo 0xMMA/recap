@@ -12,6 +12,9 @@ public class AppConfig
     public string TimestampGranularity { get; set; } = "segment";
     public bool PushToTalk { get; set; }
     public bool Diarization { get; set; } // hardcoded false, power-user only
+    public int AutoTrimMinSilenceMs { get; set; } = 600;
+    public int AutoTrimPaddingMs { get; set; } = 200;
+    public float AutoTrimNoiseFloorDb { get; set; } = -30f;
 
     [JsonIgnore]
     public static string ConfigDir =>

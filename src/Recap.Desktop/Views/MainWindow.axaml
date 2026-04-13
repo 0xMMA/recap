@@ -98,7 +98,9 @@
                 </Button>
                 <!-- Auto-Trim -->
                 <Button Focusable="False" ToolTip.Tip="Auto-remove silence from selection (A)"
-                        Command="{Binding AutoTrimCommand}">
+                        Command="{Binding AutoTrimCommand}"
+                        PointerEntered="AutoTrimPreview_Enter"
+                        PointerExited="AutoTrimPreview_Exit">
                     <Grid>
                         <TextBlock Text="A" FontSize="9" Foreground="#555"
                                    HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-2,-2,0" />
@@ -203,10 +205,18 @@
         <Border DockPanel.Dock="Bottom" Background="#1E1E1E" Padding="8,4">
             <DockPanel>
                 <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right" DockPanel.Dock="Right">
-                    <TextBlock x:Name="VersionText" Foreground="#666" FontSize="10" VerticalAlignment="Center" />
-                    <Button Content="GitHub" Focusable="False" FontSize="10" Padding="4,2"
+                    <Button x:Name="VersionButton" Focusable="False" FontSize="10" Padding="4,2"
+                            Background="Transparent" Foreground="#666" Cursor="Hand"
+                            ToolTip.Tip="Click to check for updates"
+                            Click="Version_Click" />
+                    <Button Focusable="False" FontSize="12" Padding="4,2"
                             Background="Transparent" Foreground="#888" Cursor="Hand"
-                            Click="GitHub_Click" />
+                            ToolTip.Tip="Open project on GitHub"
+                            Click="GitHub_Click">
+                        <StackPanel Orientation="Horizontal" Spacing="4">
+                            <TextBlock Text="&#x27E8;/&#x27E9;" FontSize="11" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
                 </StackPanel>
                 <StackPanel Orientation="Horizontal" Spacing="16">
                     <TextBlock FontSize="12"
@@ -279,7 +289,8 @@
                                           TrimRight="{Binding TrimRight, Mode=TwoWay}"
                                           PlaybackPosition="{Binding PlaybackPosition}"
                                           SelectionStart="{Binding SelectionStart, Mode=TwoWay}"
-                                          SelectionEnd="{Binding SelectionEnd, Mode=TwoWay}" />
+                                          SelectionEnd="{Binding SelectionEnd, Mode=TwoWay}"
+                                          TrimPreview="{Binding AutoTrimPreview}" />
 
                 <!-- Transcript display -->
                 <ScrollViewer Margin="16"

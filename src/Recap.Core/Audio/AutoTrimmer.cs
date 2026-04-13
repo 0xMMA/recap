@@ -133,6 +133,73 @@ public static class AutoTrimmer
         return regions;
     }
 
+    /// <summary>
+    /// Returns a mask array of length <paramref name="width"/> where 1 = silence (would be removed)
+    /// and 0 = speech (would be kept). Returns null if the file cannot be analyzed.
+    /// </summary>
+    public static float[]? GetSilenceMask(string filePath, int width)
+    {
+        try
+        {
+            using var reader = new WaveFileReader(filePath);
+            var format = reader.WaveFormat;
+            if (format.BitsPerSample != 16 || format.Channels != 1)
+                return null;
+
+            var samples = ReadSamples(reader);
+            if (samples.Length == 0) return null;
+
+            int windowSize = format.SampleRate * WindowMs / 1000;
+            var rmsWindows = ComputeRms(samples, windowSize);
+            if (rmsWindows.Length == 0) return null;
+
+            int noiseWindows = Math.Min(15, rmsWindows.Length);
+            float noiseFloor = 0;
+            for (int i = 0; i < noiseWindows; i++)
+                noiseFloor += rmsWindows[i];
+            noiseFloor /= noiseWindows;
+
+            float noiseFloorDb = 20 * MathF.Log10(Math.Max(noiseFloor, 1e-10f));
+            if (noiseFloorDb > NoiseFloorThresholdDbfs)
+                return null;
+
+            float speechThreshold = noiseFloor * 4;
+            int minSilenceWindows = MinSilenceMs / WindowMs;
+            int paddingWindows = PaddingMs / WindowMs;
+
+            var isSpeech = new bool[rmsWindows.Length];
+            for (int i = 0; i < rmsWindows.Length; i++)
+                isSpeech[i] = rmsWindows[i] > speechThreshold;
+
+            var regions = FindSpeechRegions(isSpeech, minSilenceWindows, paddingWindows);
+
+            // Build mask: 1 = silence/remove, 0 = speech/keep
+            var mask = new float[width];
+            for (int i = 0; i < width; i++)
+            {
+                int windowIdx = (int)((double)i / width * rmsWindows.Length);
+                windowIdx = Math.Clamp(windowIdx, 0, rmsWindows.Length - 1);
+
+                bool inSpeechRegion = false;
+                foreach (var (start, end) in regions)
+                {
+                    if (windowIdx >= start && windowIdx < end)
+                    {
+                        inSpeechRegion = true;
+                        break;
+                    }
+                }
+                mask[i] = inSpeechRegion ? 0f : 1f;
+            }
+
+            return mask;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
     // Testable helper
     public static float[] ComputeRmsPublic(short[] samples, int windowSize) => ComputeRms(samples, windowSize);
 }

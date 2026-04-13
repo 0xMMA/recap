@@ -76,6 +76,9 @@ public partial class MainWindowViewModel : ObservableObject
     [ObservableProperty]
     private double _selectionEnd = -1;
 
+    [ObservableProperty]
+    private float[]? _autoTrimPreview;
+
     public ObservableCollection<SegmentViewModel> Segments { get; } = new();
 
     private string TempDir => Path.Combine(Path.GetTempPath(), "recap", _state.SessionId);
@@ -691,6 +694,15 @@ public partial class MainWindowViewModel : ObservableObject
             if (sel != null && sel.HasFile)
                 WaveformPeaks = WaveformData.GetPeaks(sel.FilePath, 500);
             StatusText = $"Auto-trimmed {trimmed} segment(s)";
+        }
+    }
+
+    public void ComputeAutoTrimPreview()
+    {
+        var seg = _state.GetSelected();
+        if (seg != null && seg.HasFile)
+        {
+            AutoTrimPreview = AutoTrimmer.GetSilenceMask(seg.FilePath, 500);
         }
     }
 

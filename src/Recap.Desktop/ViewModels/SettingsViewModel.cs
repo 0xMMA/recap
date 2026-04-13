@@ -10,6 +10,9 @@ public partial class SettingsViewModel : ObservableObject
     [ObservableProperty] private bool _pushToTalk;
     [ObservableProperty] private bool _audioEvents = true;
     [ObservableProperty] private string _timestampGranularity = "segment";
+    [ObservableProperty] private int _autoTrimMinSilenceMs = 600;
+    [ObservableProperty] private int _autoTrimPaddingMs = 200;
+    [ObservableProperty] private float _autoTrimNoiseFloorDb = -30f;
 
     public SettingsViewModel() { }
 
@@ -20,6 +23,9 @@ public partial class SettingsViewModel : ObservableObject
         PushToTalk = config.PushToTalk;
         AudioEvents = config.AudioEvents;
         TimestampGranularity = config.TimestampGranularity;
+        AutoTrimMinSilenceMs = config.AutoTrimMinSilenceMs;
+        AutoTrimPaddingMs = config.AutoTrimPaddingMs;
+        AutoTrimNoiseFloorDb = config.AutoTrimNoiseFloorDb;
     }
 
     public AppConfig ToConfig()
@@ -30,6 +36,9 @@ public partial class SettingsViewModel : ObservableObject
         config.PushToTalk = PushToTalk;
         config.AudioEvents = AudioEvents;
         config.TimestampGranularity = TimestampGranularity;
+        config.AutoTrimMinSilenceMs = AutoTrimMinSilenceMs;
+        config.AutoTrimPaddingMs = AutoTrimPaddingMs;
+        config.AutoTrimNoiseFloorDb = AutoTrimNoiseFloorDb;
         return config;
     }
 }

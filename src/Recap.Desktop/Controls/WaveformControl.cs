@@ -37,6 +37,9 @@ public class WaveformControl : Control
     public static readonly StyledProperty<double> SelectionEndProperty =
         AvaloniaProperty.Register<WaveformControl, double>(nameof(SelectionEnd), -1.0);
 
+    public static readonly StyledProperty<float[]?> TrimPreviewProperty =
+        AvaloniaProperty.Register<WaveformControl, float[]?>(nameof(TrimPreview));
+
     public float[]? Peaks
     {
         get => GetValue(PeaksProperty);
@@ -97,6 +100,12 @@ public class WaveformControl : Control
         set => SetValue(SelectionEndProperty, value);
     }
 
+    public float[]? TrimPreview
+    {
+        get => GetValue(TrimPreviewProperty);
+        set => SetValue(TrimPreviewProperty, value);
+    }
+
     private enum DragTarget { None, Left, Right }
     private DragTarget _dragging = DragTarget.None;
     private bool _isSelecting;
@@ -109,7 +118,7 @@ public class WaveformControl : Control
         AffectsRender<WaveformControl>(PeaksProperty, IsRecordingProperty,
             IsTrimModeProperty, TrimLeftProperty, TrimRightProperty,
             ZoomLevelProperty, ScrollOffsetProperty, PlaybackPositionProperty,
-            SelectionStartProperty, SelectionEndProperty);
+            SelectionStartProperty, SelectionEndProperty, TrimPreviewProperty);
 
         IsTrimModeProperty.Changed.AddClassHandler<WaveformControl>((c, _) =>
         {
@@ -359,6 +368,31 @@ public class WaveformControl : Control
             // Draw symmetric waveform (above and below center)
             var rect = new Rect(x, midY - barHeight, Math.Max(1, barWidth - 0.5), barHeight * 2);
             context.FillRectangle(waveColor, rect);
+        }
+
+        // Auto-trim preview overlay
+        var trimPreview = TrimPreview;
+        if (trimPreview != null && trimPreview.Length > 0 && !IsTrimMode)
+        {
+            var previewBrush = new SolidColorBrush(Color.FromArgb(100, 220, 50, 50));
+            for (int i = 0; i < trimPreview.Length; i++)
+            {
+                if (trimPreview[i] > 0.5f)
+                {
+                    // Map preview index to audio fraction
+                    double audioFrac = (double)i / trimPreview.Length;
+                    double nextFrac = (double)(i + 1) / trimPreview.Length;
+                    double px = AudioFractionToPixel(audioFrac);
+                    double pxEnd = AudioFractionToPixel(nextFrac);
+                    if (pxEnd > px && px < bounds.Width && pxEnd > 0)
+                    {
+                        px = Math.Max(0, px);
+                        pxEnd = Math.Min(bounds.Width, pxEnd);
+                        context.FillRectangle(previewBrush,
+                            new Rect(px, 0, pxEnd - px, bounds.Height));
+                    }
+                }
+            }
         }
 
         // Selection overlay (when not in trim mode)
