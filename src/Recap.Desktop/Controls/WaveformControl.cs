@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Media;
 
 namespace Recap.Desktop.Controls;
@@ -11,6 +12,15 @@ public class WaveformControl : Control
 
     public static readonly StyledProperty<bool> IsRecordingProperty =
         AvaloniaProperty.Register<WaveformControl, bool>(nameof(IsRecording));
+
+    public static readonly StyledProperty<bool> IsTrimModeProperty =
+        AvaloniaProperty.Register<WaveformControl, bool>(nameof(IsTrimMode));
+
+    public static readonly StyledProperty<double> TrimLeftProperty =
+        AvaloniaProperty.Register<WaveformControl, double>(nameof(TrimLeft), 0.0);
+
+    public static readonly StyledProperty<double> TrimRightProperty =
+        AvaloniaProperty.Register<WaveformControl, double>(nameof(TrimRight), 1.0);
 
     public float[]? Peaks
     {
@@ -24,9 +34,91 @@ public class WaveformControl : Control
         set => SetValue(IsRecordingProperty, value);
     }
 
+    public bool IsTrimMode
+    {
+        get => GetValue(IsTrimModeProperty);
+        set => SetValue(IsTrimModeProperty, value);
+    }
+
+    public double TrimLeft
+    {
+        get => GetValue(TrimLeftProperty);
+        set => SetValue(TrimLeftProperty, value);
+    }
+
+    public double TrimRight
+    {
+        get => GetValue(TrimRightProperty);
+        set => SetValue(TrimRightProperty, value);
+    }
+
+    private enum DragTarget { None, Left, Right }
+    private DragTarget _dragging = DragTarget.None;
+
     static WaveformControl()
     {
-        AffectsRender<WaveformControl>(PeaksProperty, IsRecordingProperty);
+        AffectsRender<WaveformControl>(PeaksProperty, IsRecordingProperty,
+            IsTrimModeProperty, TrimLeftProperty, TrimRightProperty);
+    }
+
+    protected override void OnPointerPressed(PointerPressedEventArgs e)
+    {
+        base.OnPointerPressed(e);
+        if (!IsTrimMode) return;
+
+        var pos = e.GetPosition(this);
+        var w = Bounds.Width;
+        if (w < 1) return;
+
+        var leftX = TrimLeft * w;
+        var rightX = TrimRight * w;
+
+        // Pick the closer marker if within 10px
+        var distLeft = Math.Abs(pos.X - leftX);
+        var distRight = Math.Abs(pos.X - rightX);
+
+        if (distLeft <= 10 && distLeft <= distRight)
+            _dragging = DragTarget.Left;
+        else if (distRight <= 10)
+            _dragging = DragTarget.Right;
+        else
+            _dragging = DragTarget.None;
+
+        if (_dragging != DragTarget.None)
+            e.Handled = true;
+    }
+
+    protected override void OnPointerMoved(PointerEventArgs e)
+    {
+        base.OnPointerMoved(e);
+        if (_dragging == DragTarget.None || !IsTrimMode) return;
+
+        var pos = e.GetPosition(this);
+        var w = Bounds.Width;
+        if (w < 1) return;
+
+        var fraction = Math.Clamp(pos.X / w, 0.0, 1.0);
+
+        if (_dragging == DragTarget.Left)
+        {
+            TrimLeft = Math.Min(fraction, TrimRight - 0.01);
+        }
+        else if (_dragging == DragTarget.Right)
+        {
+            TrimRight = Math.Max(fraction, TrimLeft + 0.01);
+        }
+
+        e.Handled = true;
+    }
+
+    protected override void OnPointerReleased(PointerReleasedEventArgs e)
+    {
+        base.OnPointerReleased(e);
+        if (_dragging != DragTarget.None)
+        {
+            _dragging = DragTarget.None;
+            e.Handled = true;
+        }
     }
 
     public override void Render(DrawingContext context)
@@ -75,6 +167,37 @@ public class WaveformControl : Control
             // Draw symmetric waveform (above and below center)
             var rect = new Rect(x, midY - barHeight, Math.Max(1, barWidth - 0.5), barHeight * 2);
             context.FillRectangle(waveColor, rect);
+        }
+
+        // Trim mode overlays
+        if (IsTrimMode)
+        {
+            var overlayBrush = new SolidColorBrush(Color.FromArgb(120, 40, 40, 40));
+            var leftX = TrimLeft * bounds.Width;
+            var rightX = TrimRight * bounds.Width;
+
+            // Gray overlay on excluded regions
+            if (leftX > 0)
+                context.FillRectangle(overlayBrush, new Rect(0, 0, leftX, bounds.Height));
+            if (rightX < bounds.Width)
+                context.FillRectangle(overlayBrush, new Rect(rightX, 0, bounds.Width - rightX, bounds.Height));
+
+            // Left marker (yellow)
+            var leftPen = new Pen(new SolidColorBrush(Color.FromRgb(255, 220, 50)), 2);
+            context.DrawLine(leftPen, new Point(leftX, 0), new Point(leftX, bounds.Height));
+
+            // Right marker (cyan)
+            var rightPen = new Pen(new SolidColorBrush(Color.FromRgb(50, 220, 255)), 2);
+            context.DrawLine(rightPen, new Point(rightX, 0), new Point(rightX, bounds.Height));
+
+            // Hint text
+            var hint = new FormattedText("Trim: drag markers, Enter confirm, Esc cancel",
+                System.Globalization.CultureInfo.CurrentCulture,
+                FlowDirection.LeftToRight,
+                new Typeface("Inter", FontStyle.Normal, FontWeight.Normal),
+                11, new SolidColorBrush(Color.FromArgb(200, 255, 255, 255)));
+            context.DrawText(hint, new Point(
+                (bounds.Width - hint.Width) / 2, 4));
         }
     }
 }

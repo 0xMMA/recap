@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using NAudio.Wave;
 using Recap.Core.Audio;
 using Recap.Core.Config;
 using Recap.Core.Api;
@@ -47,6 +48,15 @@ public partial class MainWindowViewModel : ObservableObject
 
     [ObservableProperty]
     private float[]? _waveformPeaks;
+
+    [ObservableProperty]
+    private bool _isTrimMode;
+
+    [ObservableProperty]
+    private double _trimLeft;
+
+    [ObservableProperty]
+    private double _trimRight = 1.0;
 
     public ObservableCollection<SegmentViewModel> Segments { get; } = new();
 
@@ -442,6 +452,135 @@ public partial class MainWindowViewModel : ObservableObject
         catch (Exception ex)
         {
             Log.Error("Session recovery failed", ex);
+        }
+    }
+
+    [RelayCommand]
+    public void EnterTrimMode()
+    {
+        var seg = _state.GetSelected();
+        if (seg == null || !seg.HasFile) { StatusText = "No segment to trim"; return; }
+        IsTrimMode = true;
+        TrimLeft = 0.0;
+        TrimRight = 1.0;
+        StatusText = "Trim mode — drag markers or use Enter to confirm, Esc to cancel";
+    }
+
+    [RelayCommand]
+    public void ConfirmTrim()
+    {
+        if (!IsTrimMode) return;
+        var seg = _state.GetSelected();
+        if (seg == null || !seg.HasFile) return;
+
+        try
+        {
+            ApplyTrim(seg, TrimLeft, TrimRight);
+            WaveformData.Invalidate(seg.FilePath);
+            seg.RefreshHasFile();
+            WaveformPeaks = WaveformData.GetPeaks(seg.FilePath, 500);
+            SyncSegments();
+            StatusText = $"Trimmed segment {seg.Index + 1}";
+            Log.Info($"Trimmed segment {seg.Index + 1}: [{TrimLeft:P0}-{TrimRight:P0}]");
+        }
+        catch (Exception ex)
+        {
+            StatusText = $"Trim failed: {ex.Message}";
+            Log.Error("Trim failed", ex);
+        }
+        IsTrimMode = false;
+    }
+
+    [RelayCommand]
+    public void CancelTrim()
+    {
+        IsTrimMode = false;
+        StatusText = "Trim cancelled";
+    }
+
+    private static void RetryFileOp(Action op)
+    {
+        for (int i = 0; i < 3; i++)
+        {
+            try { op(); return; }
+            catch (IOException) when (i < 2) { Thread.Sleep(100); }
+        }
+    }
+
+    private void ApplyTrim(Segment segment, double leftFraction, double rightFraction)
+    {
+        var tempPath = segment.FilePath + ".trim.wav";
+        using (var stream = new FileStream(segment.FilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+        using (var reader = new WaveFileReader(stream))
+        {
+            var totalSamples = reader.SampleCount;
+            long startSample = (long)(leftFraction * totalSamples);
+            long endSample = (long)(rightFraction * totalSamples);
+
+            using var writer = new WaveFileWriter(tempPath, reader.WaveFormat);
+            reader.Position = startSample * reader.WaveFormat.BlockAlign;
+            long bytesToRead = (endSample - startSample) * reader.WaveFormat.BlockAlign;
+            var buffer = new byte[Math.Min(bytesToRead, 65536)];
+            long remaining = bytesToRead;
+            while (remaining > 0)
+            {
+                int toRead = (int)Math.Min(buffer.Length, remaining);
+                int read = reader.Read(buffer, 0, toRead);
+                if (read == 0) break;
+                writer.Write(buffer, 0, read);
+                remaining -= read;
+            }
+        }
+
+        WaveformData.Invalidate(segment.FilePath);
+        RetryFileOp(() => File.Delete(segment.FilePath));
+        File.Move(tempPath, segment.FilePath);
+
+        using var trimmed = new WaveFileReader(segment.FilePath);
+        segment.Duration = trimmed.TotalTime;
+    }
+
+    [RelayCommand]
+    public void AutoTrim()
+    {
+        var segments = _state.GetSelectedSegments().Where(s => s.HasFile).ToList();
+        if (segments.Count == 0) { StatusText = "No segments to auto-trim"; return; }
+
+        int trimmed = 0;
+        foreach (var seg in segments)
+        {
+            var outputPath = seg.FilePath + ".autotrim.wav";
+            var result = AutoTrimmer.Trim(seg.FilePath, outputPath);
+            if (result.Success && result.OutputPath != null)
+            {
+                try
+                {
+                    WaveformData.Invalidate(seg.FilePath);
+                    RetryFileOp(() => File.Delete(seg.FilePath));
+                    File.Move(result.OutputPath, seg.FilePath);
+                    using var reader = new WaveFileReader(seg.FilePath);
+                    seg.Duration = reader.TotalTime;
+                    seg.RefreshHasFile();
+                    trimmed++;
+                }
+                catch (IOException ex)
+                {
+                    StatusText = $"Auto-trim file error: {ex.Message}";
+                    Log.Error("Auto-trim file replace failed", ex);
+                }
+            }
+            else
+            {
+                StatusText = result.Error ?? "Auto-trim failed";
+            }
+        }
+        if (trimmed > 0)
+        {
+            SyncSegments();
+            var sel = _state.GetSelected();
+            if (sel != null && sel.HasFile)
+                WaveformPeaks = WaveformData.GetPeaks(sel.FilePath, 500);
+            StatusText = $"Auto-trimmed {trimmed} segment(s)";
         }
     }
 

@@ -32,6 +32,13 @@
                         ToolTip.Tip="Pause (Space)"
                         Content="&#x23F8;" Width="36" Height="36" FontSize="16" />
 
+                <Button Command="{Binding EnterTrimModeCommand}"
+                        ToolTip.Tip="Trim (T)"
+                        Content="&#x2702;" Width="36" Height="36" FontSize="16" />
+                <Button Command="{Binding AutoTrimCommand}"
+                        ToolTip.Tip="Auto-Trim (A)"
+                        Content="AT" Width="36" Height="36" FontSize="12" FontWeight="Bold" />
+
                 <Border Width="1" Background="#555" Margin="4,4" />
 
                 <Button Command="{Binding TranscribeCommand}"
@@ -121,7 +128,10 @@
                                           DockPanel.Dock="Top"
                                           Height="120"
                                           Peaks="{Binding WaveformPeaks}"
-                                          IsRecording="{Binding RecordingState, Converter={x:Static conv:RecordingStateConverters.IsRecording}}" />
+                                          IsRecording="{Binding RecordingState, Converter={x:Static conv:RecordingStateConverters.IsRecording}}"
+                                          IsTrimMode="{Binding IsTrimMode}"
+                                          TrimLeft="{Binding TrimLeft, Mode=TwoWay}"
+                                          TrimRight="{Binding TrimRight, Mode=TwoWay}" />
 
                 <!-- Transcript display -->
                 <ScrollViewer Margin="16"

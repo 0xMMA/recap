@@ -98,6 +98,14 @@ public partial class MainWindow : Window
                 _vm.SelectAllCommand.Execute(null);
                 e.Handled = true;
                 break;
+            case Key.Return when _vm.IsTrimMode:
+                _vm.ConfirmTrimCommand.Execute(null);
+                e.Handled = true;
+                break;
+            case Key.Escape when _vm.IsTrimMode:
+                _vm.CancelTrimCommand.Execute(null);
+                e.Handled = true;
+                break;
             case Key.Return when shift:
                 _vm.PlayAllCommand.Execute(null);
                 e.Handled = true;
@@ -136,6 +144,14 @@ public partial class MainWindow : Window
                 break;
             case Key.N:
                 _vm.NewSessionCommand.Execute(null);
+                e.Handled = true;
+                break;
+            case Key.T when !_vm.IsTrimMode:
+                _vm.EnterTrimModeCommand.Execute(null);
+                e.Handled = true;
+                break;
+            case Key.A when !ctrl:
+                _vm.AutoTrimCommand.Execute(null);
                 e.Handled = true;
                 break;
             case Key.Q:
