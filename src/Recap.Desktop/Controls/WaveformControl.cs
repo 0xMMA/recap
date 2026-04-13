@@ -389,24 +389,26 @@ public class WaveformControl : Control
             context.FillRectangle(waveColor, rect);
         }
 
-        // dB scale on left edge
-        var dbLevels = new[] { 0, -6, -12, -18, -24, -30, -36, -42 };
-        var scalePen = new Pen(new SolidColorBrush(Color.FromArgb(60, 255, 255, 255)), 1);
-        foreach (var db in dbLevels)
+        // dB scale on left edge (relative to normalized peak, adaptive label count)
         {
-            float amplitude = MathF.Pow(10, db / 20f); // dB to linear
-            double y = midY - (amplitude * midY * 0.95);
-            if (y > 4 && y < bounds.Height - 4)
+            var scalePen = new Pen(new SolidColorBrush(Color.FromArgb(40, 255, 255, 255)), 1);
+            int labelSpacing = Math.Max(1, (int)(midY / 4)); // max ~4 labels on half
+            double lastLabelY = -100;
+            for (int db = -3; db >= -48; db -= 3)
             {
-                // Horizontal guide line (very faint)
-                context.DrawLine(scalePen, new Point(0, y), new Point(bounds.Width, y));
-                // dB label
-                var label = new FormattedText($"{db}dB",
+                float amp = MathF.Pow(10, db / 20f); // normalized amplitude
+                double y = midY - (amp * midY * 0.95);
+                if (y < 4 || y > midY - 4) continue;
+                if (y - lastLabelY < 16) continue; // skip if too close to previous label
+
+                context.DrawLine(scalePen, new Point(30, y), new Point(bounds.Width, y));
+                var label = new FormattedText($"{db}",
                     System.Globalization.CultureInfo.CurrentCulture,
                     FlowDirection.LeftToRight,
                     new Typeface("Inter", FontStyle.Normal, FontWeight.Normal),
-                    8, new SolidColorBrush(Color.FromArgb(100, 200, 200, 200)));
+                    9, new SolidColorBrush(Color.FromArgb(80, 200, 200, 200)));
                 context.DrawText(label, new Point(2, y - label.Height / 2));
+                lastLabelY = y;
             }
         }
 
@@ -435,21 +437,24 @@ public class WaveformControl : Control
             }
         }
 
-        // Threshold line during auto-trim preview
-        if (trimPreview != null && ThresholdLevel > 0)
+        // Threshold line during auto-trim preview (in normalized space)
+        if (trimPreview != null && ThresholdLevel > 0 && ThresholdLevel < 1)
         {
             double threshY = midY - (ThresholdLevel * midY * 0.95);
-            var threshPen = new Pen(new SolidColorBrush(Color.FromRgb(255, 200, 50)), 1,
-                new DashStyle(new[] { 4.0, 4.0 }, 0));
-            context.DrawLine(threshPen, new Point(0, threshY), new Point(bounds.Width, threshY));
+            var threshPen = new Pen(new SolidColorBrush(Color.FromRgb(255, 200, 50)), 1.5,
+                new DashStyle(new[] { 6.0, 3.0 }, 0));
+            context.DrawLine(threshPen, new Point(30, threshY), new Point(bounds.Width, threshY));
+            // Mirror on bottom half
+            double threshYBottom = midY + (ThresholdLevel * midY * 0.95);
+            context.DrawLine(threshPen, new Point(30, threshYBottom), new Point(bounds.Width, threshYBottom));
 
-            // Label
+            // Label showing normalized dB
             float threshDb = 20 * MathF.Log10(Math.Max((float)ThresholdLevel, 1e-7f));
-            var threshLabel = new FormattedText($"threshold: {threshDb:F0}dB",
+            var threshLabel = new FormattedText($"silence threshold: {threshDb:F0}dB",
                 System.Globalization.CultureInfo.CurrentCulture,
                 FlowDirection.LeftToRight,
                 new Typeface("Inter", FontStyle.Normal, FontWeight.Normal),
-                9, new SolidColorBrush(Color.FromRgb(255, 200, 50)));
+                10, new SolidColorBrush(Color.FromRgb(255, 200, 50)));
             context.DrawText(threshLabel, new Point(bounds.Width - threshLabel.Width - 4, threshY - threshLabel.Height - 2));
         }
 

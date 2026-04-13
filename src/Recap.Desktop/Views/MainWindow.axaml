@@ -320,11 +320,11 @@
 
         <!-- Center Content -->
         <Border Background="#1A1A1A">
-            <DockPanel>
-                <!-- Waveform -->
+            <Grid RowDefinitions="*,Auto">
+                <!-- Waveform (fills available space) -->
                 <controls:WaveformControl x:Name="Waveform"
-                                          DockPanel.Dock="Top"
-                                          Height="120"
+                                          Grid.Row="0"
+                                          MinHeight="80"
                                           Peaks="{Binding WaveformPeaks}"
                                           IsRecording="{Binding RecordingState, Converter={x:Static conv:RecordingStateConverters.IsRecording}}"
                                           IsTrimMode="{Binding IsTrimMode}"
@@ -337,14 +337,14 @@
                                           ThresholdLevel="{Binding AutoTrimThreshold}"
                                           TotalDurationSeconds="{Binding SelectedDurationSeconds}" />
 
-                <!-- Transcript display -->
-                <ScrollViewer Margin="16"
+                <!-- Transcript display (only visible when transcript exists, takes bottom space) -->
+                <ScrollViewer Grid.Row="1" Margin="8" MaxHeight="200"
                               IsVisible="{Binding TranscriptText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
                     <TextBlock Text="{Binding TranscriptText}"
                                TextWrapping="Wrap" FontSize="14" Foreground="#DDD"
                                Padding="8" />
                 </ScrollViewer>
-            </DockPanel>
+            </Grid>
         </Border>
     </DockPanel>
 </Window>

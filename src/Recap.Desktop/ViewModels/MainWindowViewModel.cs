@@ -710,7 +710,38 @@ public partial class MainWindowViewModel : ObservableObject
         if (seg == null || !seg.HasFile) return;
 
         var threshold = AutoTrimmer.ComputeDefaultThreshold(seg.FilePath);
-        AutoTrimThreshold = threshold > 0 ? threshold : -1;
+
+        // Normalize threshold to match waveform display space
+        // WaveformData normalizes: median of non-silent peaks → 0.6
+        // So normFactor = rawMedian / 0.6
+        // Normalized threshold = rawThreshold / normFactor
+        if (threshold > 0)
+        {
+            var rms = AutoTrimmer.GetRmsValues(seg.FilePath, 500);
+            if (rms != null)
+            {
+                var nonSilent = rms.Where(r => r > 0.001f).OrderBy(r => r).ToArray();
+                if (nonSilent.Length > 0)
+                {
+                    float median = nonSilent[nonSilent.Length / 2];
+                    float normFactor = median / 0.6f;
+                    AutoTrimThreshold = normFactor > 0 ? threshold / normFactor : -1;
+                }
+                else
+                {
+                    AutoTrimThreshold = -1;
+                }
+            }
+            else
+            {
+                AutoTrimThreshold = -1;
+            }
+        }
+        else
+        {
+            AutoTrimThreshold = -1;
+        }
+
         AutoTrimPreview = threshold > 0
             ? AutoTrimmer.GetSilenceMaskWithThreshold(seg.FilePath, 500, threshold)
             : null;
