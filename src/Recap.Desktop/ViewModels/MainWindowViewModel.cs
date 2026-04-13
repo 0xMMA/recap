@@ -66,6 +66,10 @@ public partial class MainWindowViewModel : ObservableObject
 
     private bool _isPlayingSingle;
 
+    private string? _lastBackupPath;
+    private string? _lastBackupOriginal;
+    private TimeSpan _lastBackupDuration;
+
     [ObservableProperty]
     private double _selectionStart = -1;
 
@@ -140,15 +144,38 @@ public partial class MainWindowViewModel : ObservableObject
     [RelayCommand]
     private void Undo()
     {
-        if (_state.Undo())
+        // Try audio edit undo first
+        if (_lastBackupPath != null && _lastBackupOriginal != null && File.Exists(_lastBackupPath))
         {
-            SyncSegments();
-            StatusText = "Undo successful";
+            try
+            {
+                var seg = _state.Segments.FirstOrDefault(s => s.FilePath == _lastBackupOriginal);
+                if (seg != null)
+                {
+                    WaveformData.Invalidate(seg.FilePath);
+                    RetryFileOp(() => File.Delete(seg.FilePath));
+                    File.Move(_lastBackupPath, seg.FilePath);
+                    seg.Duration = _lastBackupDuration;
+                    seg.RefreshHasFile();
+                    WaveformPeaks = WaveformData.GetPeaks(seg.FilePath, 500);
+                    SyncSegments();
+                    StatusText = "Undo: audio edit restored";
+                    _lastBackupPath = null;
+                    _lastBackupOriginal = null;
+                    return;
+                }
+            }
+            catch (Exception ex)
+            {
+                StatusText = $"Undo failed: {ex.Message}";
+                Log.Error("Audio undo failed", ex);
+                return;
+            }
         }
-        else
-        {
-            StatusText = "Nothing to undo";
-        }
+
+        // Fall back to segment delete undo
+        StatusText = _state.Undo() ? "Undo: segment restored" : "Nothing to undo";
+        SyncSegments();
     }
 
     [RelayCommand]
@@ -451,6 +478,16 @@ public partial class MainWindowViewModel : ObservableObject
             SelectedSegment = null;
     }
 
+    partial void OnPlayingSegmentIndexChanged(int value)
+    {
+        if (!_isPlayingSingle && value >= 0 && value < _state.Segments.Count)
+        {
+            var seg = _state.Segments[value];
+            if (seg.HasFile)
+                WaveformPeaks = WaveformData.GetPeaks(seg.FilePath, 500);
+        }
+    }
+
     partial void OnSelectedSegmentChanged(SegmentViewModel? value)
     {
         if (value != null && value.HasFile)
@@ -503,8 +540,18 @@ public partial class MainWindowViewModel : ObservableObject
         var seg = _state.GetSelected();
         if (seg == null || !seg.HasFile) { StatusText = "No segment to trim"; return; }
         IsTrimMode = true;
-        TrimLeft = 0.0;
-        TrimRight = 1.0;
+        if (SelectionStart >= 0 && SelectionEnd >= 0)
+        {
+            TrimLeft = Math.Min(SelectionStart, SelectionEnd);
+            TrimRight = Math.Max(SelectionStart, SelectionEnd);
+            SelectionStart = -1;
+            SelectionEnd = -1;
+        }
+        else
+        {
+            TrimLeft = 0.0;
+            TrimRight = 1.0;
+        }
         StatusText = "Trim mode — drag markers or use Enter to confirm, Esc to cancel";
     }
 
@@ -517,6 +564,7 @@ public partial class MainWindowViewModel : ObservableObject
 
         try
         {
+            BackupBeforeEdit(seg);
             ApplyTrim(seg, TrimLeft, TrimRight);
             WaveformData.Invalidate(seg.FilePath);
             seg.RefreshHasFile();
@@ -531,13 +579,31 @@ public partial class MainWindowViewModel : ObservableObject
             Log.Error("Trim failed", ex);
         }
         IsTrimMode = false;
+        SelectionStart = -1;
+        SelectionEnd = -1;
     }
 
     [RelayCommand]
     public void CancelTrim()
     {
         IsTrimMode = false;
+        SelectionStart = -1;
+        SelectionEnd = -1;
         StatusText = "Trim cancelled";
+    }
+
+    private void BackupBeforeEdit(Segment segment)
+    {
+        // Clean previous backup
+        if (_lastBackupPath != null && File.Exists(_lastBackupPath))
+        {
+            try { File.Delete(_lastBackupPath); } catch { }
+        }
+
+        _lastBackupOriginal = segment.FilePath;
+        _lastBackupPath = segment.FilePath + ".backup.wav";
+        File.Copy(segment.FilePath, _lastBackupPath, true);
+        _lastBackupDuration = segment.Duration;
     }
 
     private static void RetryFileOp(Action op)
@@ -589,6 +655,7 @@ public partial class MainWindowViewModel : ObservableObject
         if (segments.Count == 0) { StatusText = "No segments to auto-trim"; return; }
 
         int trimmed = 0;
+        bool backedUp = false;
         foreach (var seg in segments)
         {
             var outputPath = seg.FilePath + ".autotrim.wav";
@@ -597,6 +664,7 @@ public partial class MainWindowViewModel : ObservableObject
             {
                 try
                 {
+                    if (!backedUp) { BackupBeforeEdit(seg); backedUp = true; }
                     WaveformData.Invalidate(seg.FilePath);
                     RetryFileOp(() => File.Delete(seg.FilePath));
                     File.Move(result.OutputPath, seg.FilePath);
@@ -628,10 +696,43 @@ public partial class MainWindowViewModel : ObservableObject
 
     public void UpdatePlaybackPosition()
     {
-        PlaybackPosition = _audio.PlaybackPosition;
-        if (_audio.PlaybackPosition < 0 && RecordingState != RecordingState.Recording)
+        var rawPos = _audio.PlaybackPosition;
+
+        if (rawPos < 0 || (!_audio.IsPlaying && !_audio.IsPaused))
         {
             PlaybackPosition = -1;
+            if (StatusText.StartsWith("Playing"))
+                StatusText = "Ready";
+            return;
+        }
+
+        if (_isPlayingSingle)
+        {
+            PlaybackPosition = rawPos;
+        }
+        else
+        {
+            // During play-all: convert global position to position within current segment
+            var totalDuration = _state.TotalDuration.TotalSeconds;
+            if (totalDuration <= 0) { PlaybackPosition = rawPos; return; }
+
+            var currentTime = rawPos * totalDuration;
+            double cumBefore = 0;
+            foreach (var seg in _state.Segments)
+            {
+                if (seg.Index == PlayingSegmentIndex)
+                {
+                    // Position within this segment
+                    var segDuration = seg.Duration.TotalSeconds;
+                    if (segDuration > 0)
+                        PlaybackPosition = (currentTime - cumBefore) / segDuration;
+                    else
+                        PlaybackPosition = 0;
+                    return;
+                }
+                cumBefore += seg.Duration.TotalSeconds;
+            }
+            PlaybackPosition = rawPos;
         }
     }
 
@@ -685,6 +786,7 @@ public partial class MainWindowViewModel : ObservableObject
 
         try
         {
+            BackupBeforeEdit(seg);
             DeleteAudioRange(seg, start, end);
             WaveformData.Invalidate(seg.FilePath);
             seg.RefreshHasFile();

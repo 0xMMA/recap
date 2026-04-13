@@ -110,6 +110,15 @@ public class WaveformControl : Control
             IsTrimModeProperty, TrimLeftProperty, TrimRightProperty,
             ZoomLevelProperty, ScrollOffsetProperty, PlaybackPositionProperty,
             SelectionStartProperty, SelectionEndProperty);
+
+        IsTrimModeProperty.Changed.AddClassHandler<WaveformControl>((c, _) =>
+        {
+            if (!c.IsTrimMode)
+            {
+                c._dragging = DragTarget.None;
+                c._isSelecting = false;
+            }
+        });
     }
 
     protected override void OnPointerWheelChanged(PointerWheelEventArgs e)
