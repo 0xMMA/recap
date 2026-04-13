@@ -83,17 +83,43 @@ public class AutoTrimmerTests : IDisposable
     }
 
     [Fact]
-    public void Trim_LoudSignalThroughout_BailsOnNoiseFloor()
+    public void Trim_QuietSpeechWithSilence_KeepsSpeech()
     {
-        // Loud noise everywhere → noise floor too high
+        // Simulates whispered speech: quiet signal with silence gaps
+        // Old algorithm would classify this all as silence
+        var samples = new short[16000 * 3]; // 3 seconds
+        // First 1s: near silence
+        for (int i = 0; i < 16000; i++)
+            samples[i] = (short)(Random.Shared.Next(-10, 10));
+        // Middle 1s: quiet "whisper" (~10% amplitude, still very quiet)
+        for (int i = 16000; i < 32000; i++)
+            samples[i] = (short)(Math.Sin(i * 0.3) * 3000);
+        // Last 1s: near silence
+        for (int i = 32000; i < 48000; i++)
+            samples[i] = (short)(Random.Shared.Next(-10, 10));
+
+        var path = CreateTestWav("whisper.wav", samples);
+        var output = Path.Combine(_tempDir, "out.wav");
+        var result = AutoTrimmer.Trim(path, output);
+        result.Success.ShouldBeTrue();
+
+        // Output should be shorter (silence trimmed)
+        using var reader = new WaveFileReader(output);
+        reader.TotalTime.TotalSeconds.ShouldBeLessThan(2.5);
+        reader.TotalTime.TotalSeconds.ShouldBeGreaterThan(0.5);
+    }
+
+    [Fact]
+    public void Trim_UniformNoise_CannotDistinguish()
+    {
+        // Uniform noise everywhere → can't distinguish speech from silence
         var samples = new short[16000 * 2];
         for (int i = 0; i < samples.Length; i++)
             samples[i] = (short)(Random.Shared.Next(-20000, 20000));
 
-        var path = CreateTestWav("loud.wav", samples);
+        var path = CreateTestWav("noise.wav", samples);
         var output = Path.Combine(_tempDir, "out.wav");
         var result = AutoTrimmer.Trim(path, output);
         result.Success.ShouldBeFalse();
-        result.Error.ShouldContain("Noise floor too high");
     }
 }
