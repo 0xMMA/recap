@@ -91,7 +91,7 @@
 
                 <Border Width="1" Background="#555" Margin="6,6" />
 
-                <!-- Trim -->
+                <!-- Trim (bracket markers icon) -->
                 <Button Focusable="False" ToolTip.Tip="Trim selected segment (T)"
                         Command="{Binding EnterTrimModeCommand}">
                     <Grid>
@@ -99,9 +99,7 @@
                                    HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-2,-2,0" />
                         <StackPanel Spacing="0" HorizontalAlignment="Center" VerticalAlignment="Center">
                             <Border Width="18" Height="18" HorizontalAlignment="Center">
-                                <Border BorderBrush="#DDD" BorderThickness="1.5" CornerRadius="2" Padding="3,0" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                    <TextBlock Text="T" FontSize="12" FontWeight="Bold" Foreground="#DDD" />
-                                </Border>
+                                <Path Data="M 2,0 L 0,0 L 0,16 L 2,16 M 12,0 L 14,0 L 14,16 L 12,16" Stroke="#DDD" StrokeThickness="2" Width="14" Height="16" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center" />
                             </Border>
                             <TextBlock Text="Trim" FontSize="9" HorizontalAlignment="Center" Foreground="#CCC" />
                         </StackPanel>
@@ -126,7 +124,7 @@
 
                 <Border Width="1" Background="#555" Margin="6,6" />
 
-                <!-- Transcribe -->
+                <!-- Transcribe (waveform→text icon) -->
                 <Button Focusable="False" ToolTip.Tip="Transcribe selected segments (X)"
                         Command="{Binding TranscribeCommand}">
                     <Grid>
@@ -144,15 +142,20 @@
                         </StackPanel>
                     </Grid>
                 </Button>
-                <!-- Transcribe All -->
+                <!-- Transcribe All (double text lines icon) -->
                 <Button Focusable="False" ToolTip.Tip="Transcribe all segments combined (Shift+X)"
                         Command="{Binding TranscribeAllCommand}">
                     <Grid>
-                        <TextBlock Text="&#x21E7;X" FontSize="9" Foreground="#555"
+                        <TextBlock Text="Sh+X" FontSize="8" Foreground="#555"
                                    HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-2,-2,0" />
                         <StackPanel Spacing="0" HorizontalAlignment="Center" VerticalAlignment="Center">
                             <Border Width="18" Height="18" HorizontalAlignment="Center">
-                                <TextBlock Text="TX" FontSize="14" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                <StackPanel Spacing="1.5" HorizontalAlignment="Center" VerticalAlignment="Center" Width="14">
+                                    <Border Height="2" Background="#DDD" />
+                                    <Border Height="2" Background="#DDD" />
+                                    <Border Height="2" Background="#DDD" Margin="0,0,3,0" />
+                                    <Border Height="2" Background="#DDD" Margin="0,0,3,0" />
+                                </StackPanel>
                             </Border>
                             <TextBlock Text="TX All" FontSize="9" HorizontalAlignment="Center" Foreground="#CCC" />
                         </StackPanel>
@@ -175,14 +178,14 @@
 
                 <Border Width="1" Background="#555" Margin="6,6" />
 
-                <!-- Save -->
+                <!-- Save (floppy disk icon) -->
                 <Button x:Name="SaveButton" Focusable="False" ToolTip.Tip="Save audio to file (S)">
                     <Grid>
                         <TextBlock Text="S" FontSize="9" Foreground="#555"
                                    HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-2,-2,0" />
                         <StackPanel Spacing="0" HorizontalAlignment="Center" VerticalAlignment="Center">
                             <Border Width="18" Height="18" HorizontalAlignment="Center">
-                                <Path Data="M 3,0 L 3,8 L 0,8 L 7,14 L 14,8 L 11,8 L 11,0 Z M 0,15 L 14,15 L 14,16 L 0,16 Z" Fill="#DDD" Width="14" Height="16" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                <Path Data="M 2,0 L 10,0 L 14,4 L 14,14 L 0,14 L 0,0 Z M 3,0 L 3,5 L 11,5 L 11,0 M 4,8 L 10,8 L 10,13 L 4,13 Z" Fill="#DDD" Width="14" Height="14" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center" />
                             </Border>
                             <TextBlock Text="Save" FontSize="9" HorizontalAlignment="Center" Foreground="#CCC" />
                         </StackPanel>

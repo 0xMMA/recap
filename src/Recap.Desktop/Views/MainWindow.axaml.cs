@@ -61,7 +61,8 @@ public partial class MainWindow : Window
             versionButton.Content = $"v{version}";
         }
 
-        _waveformTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(16) }; // ~60fps for smooth playback indicator
+        // Live waveform during recording (15fps is enough for ring buffer)
+        _waveformTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(66) };
         _waveformTimer.Tick += (_, _) =>
         {
             if (_vm.RecordingState == RecordingState.Recording)
@@ -75,13 +76,21 @@ public partial class MainWindow : Window
             }
             else
             {
-                _vm.UpdatePlaybackPosition();
                 _vm.UpdatePlayingSegment();
                 foreach (var seg in _vm.Segments)
                     seg.IsPlaying = seg.Model.Index == _vm.PlayingSegmentIndex;
             }
         };
         _waveformTimer.Start();
+
+        // Playback position at high priority for smooth indicator
+        var playbackTimer = new DispatcherTimer(DispatcherPriority.Render) { Interval = TimeSpan.FromMilliseconds(8) };
+        playbackTimer.Tick += (_, _) =>
+        {
+            if (_vm.RecordingState != RecordingState.Recording)
+                _vm.UpdatePlaybackPosition();
+        };
+        playbackTimer.Start();
     }
 
     protected override async void OnOpened(EventArgs e)
