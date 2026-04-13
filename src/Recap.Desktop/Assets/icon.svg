@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Background circle -->
+  <circle cx="256" cy="256" r="240" fill="#1a1a2e"/>
+  <circle cx="256" cy="256" r="220" fill="#16213e"/>
+
+  <!-- Microphone body -->
+  <rect x="216" y="120" width="80" height="160" rx="40" fill="#00b464"/>
+
+  <!-- Microphone stand arc -->
+  <path d="M 176 260 Q 176 340 256 340 Q 336 340 336 260" fill="none" stroke="#00b464" stroke-width="16" stroke-linecap="round"/>
+
+  <!-- Microphone stand -->
+  <line x1="256" y1="340" x2="256" y2="390" stroke="#00b464" stroke-width="16" stroke-linecap="round"/>
+  <line x1="216" y1="390" x2="296" y2="390" stroke="#00b464" stroke-width="16" stroke-linecap="round"/>
+
+  <!-- Sound waves (right side, representing STT output) -->
+  <path d="M 340 200 Q 370 230 370 260 Q 370 290 340 320" fill="none" stroke="#4ecdc4" stroke-width="10" stroke-linecap="round" opacity="0.8"/>
+  <path d="M 360 180 Q 400 220 400 260 Q 400 300 360 340" fill="none" stroke="#4ecdc4" stroke-width="8" stroke-linecap="round" opacity="0.5"/>
+
+  <!-- Text lines (representing transcript) -->
+  <line x1="180" y1="420" x2="332" y2="420" stroke="#4ecdc4" stroke-width="8" stroke-linecap="round" opacity="0.6"/>
+  <line x1="200" y1="445" x2="312" y2="445" stroke="#4ecdc4" stroke-width="6" stroke-linecap="round" opacity="0.4"/>
+  <line x1="220" y1="465" x2="292" y2="465" stroke="#4ecdc4" stroke-width="5" stroke-linecap="round" opacity="0.3"/>
+</svg>

@@ -60,7 +60,7 @@ public partial class MainWindow : Window
             versionText.Text = $"v{version}";
         }
 
-        _waveformTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(66) };
+        _waveformTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(16) }; // ~60fps for smooth playback indicator
         _waveformTimer.Tick += (_, _) =>
         {
             if (_vm.RecordingState == RecordingState.Recording)
