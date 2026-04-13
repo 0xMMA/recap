@@ -491,15 +491,19 @@ public partial class MainWindowViewModel : ObservableObject
         }
     }
 
+    [ObservableProperty] private double _selectedDurationSeconds;
+
     partial void OnSelectedSegmentChanged(SegmentViewModel? value)
     {
         if (value != null && value.HasFile)
         {
             WaveformPeaks = WaveformData.GetPeaks(value.FilePath, 500);
+            SelectedDurationSeconds = value.Model.Duration.TotalSeconds;
         }
         else
         {
             WaveformPeaks = null;
+            SelectedDurationSeconds = 0;
         }
     }
 

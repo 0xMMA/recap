@@ -91,7 +91,7 @@
 
                 <Border Width="1" Background="#555" Margin="6,6" />
 
-                <!-- Trim (bracket markers icon) -->
+                <!-- Trim (crop/selection icon — filled) -->
                 <Button Focusable="False" ToolTip.Tip="Trim selected segment (T)"
                         Command="{Binding EnterTrimModeCommand}">
                     <Grid>
@@ -99,13 +99,17 @@
                                    HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-2,-2,0" />
                         <StackPanel Spacing="0" HorizontalAlignment="Center" VerticalAlignment="Center">
                             <Border Width="18" Height="18" HorizontalAlignment="Center">
-                                <Path Data="M 2,0 L 0,0 L 0,16 L 2,16 M 12,0 L 14,0 L 14,16 L 12,16" Stroke="#DDD" StrokeThickness="2" Width="14" Height="16" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                <Canvas Width="14" Height="14" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                    <Rectangle Canvas.Left="3" Canvas.Top="0" Width="2" Height="14" Fill="#DDD" />
+                                    <Rectangle Canvas.Left="9" Canvas.Top="0" Width="2" Height="14" Fill="#DDD" />
+                                    <Rectangle Canvas.Left="3" Canvas.Top="6" Width="8" Height="2" Fill="#DDD" Opacity="0.5" />
+                                </Canvas>
                             </Border>
                             <TextBlock Text="Trim" FontSize="9" HorizontalAlignment="Center" Foreground="#CCC" />
                         </StackPanel>
                     </Grid>
                 </Button>
-                <!-- Auto-Trim -->
+                <!-- Auto-Trim (wand/magic icon — filled) -->
                 <Button Focusable="False" ToolTip.Tip="Auto-remove silence from selection (A)"
                         Command="{Binding AutoTrimCommand}"
                         PointerEntered="AutoTrimPreview_Enter"
@@ -115,7 +119,12 @@
                                    HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-2,-2,0" />
                         <StackPanel Spacing="0" HorizontalAlignment="Center" VerticalAlignment="Center">
                             <Border Width="18" Height="18" HorizontalAlignment="Center">
-                                <Path Data="M 8,0 L 3,9 L 7,9 L 5,16 L 13,6 L 9,6 L 12,0 Z" Fill="#DDD" Width="14" Height="16" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                <Canvas Width="14" Height="14" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                    <Rectangle Canvas.Left="1" Canvas.Top="1" Width="2" Height="2" Fill="#DDD" />
+                                    <Rectangle Canvas.Left="5" Canvas.Top="0" Width="1.5" Height="3" Fill="#DDD" />
+                                    <Rectangle Canvas.Left="9" Canvas.Top="2" Width="2" Height="2" Fill="#DDD" />
+                                    <Path Data="M 2,5 L 12,13" Stroke="#DDD" StrokeThickness="2.5" StrokeLineCap="Round" />
+                                </Canvas>
                             </Border>
                             <TextBlock Text="Auto Trim" FontSize="9" HorizontalAlignment="Center" Foreground="#CCC" />
                         </StackPanel>
@@ -324,7 +333,8 @@
                                           PlaybackPosition="{Binding PlaybackPosition}"
                                           SelectionStart="{Binding SelectionStart, Mode=TwoWay}"
                                           SelectionEnd="{Binding SelectionEnd, Mode=TwoWay}"
-                                          TrimPreview="{Binding AutoTrimPreview}" />
+                                          TrimPreview="{Binding AutoTrimPreview}"
+                                          TotalDurationSeconds="{Binding SelectedDurationSeconds}" />
 
                 <!-- Transcript display -->
                 <ScrollViewer Margin="16"

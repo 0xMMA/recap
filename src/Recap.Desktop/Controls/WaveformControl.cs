@@ -37,6 +37,9 @@ public class WaveformControl : Control
     public static readonly StyledProperty<double> SelectionEndProperty =
         AvaloniaProperty.Register<WaveformControl, double>(nameof(SelectionEnd), -1.0);
 
+    public static readonly StyledProperty<double> TotalDurationSecondsProperty =
+        AvaloniaProperty.Register<WaveformControl, double>(nameof(TotalDurationSeconds), 0.0);
+
     public static readonly StyledProperty<float[]?> TrimPreviewProperty =
         AvaloniaProperty.Register<WaveformControl, float[]?>(nameof(TrimPreview));
 
@@ -98,6 +101,12 @@ public class WaveformControl : Control
     {
         get => GetValue(SelectionEndProperty);
         set => SetValue(SelectionEndProperty, value);
+    }
+
+    public double TotalDurationSeconds
+    {
+        get => GetValue(TotalDurationSecondsProperty);
+        set => SetValue(TotalDurationSecondsProperty, value);
     }
 
     public float[]? TrimPreview
@@ -404,12 +413,26 @@ public class WaveformControl : Control
             double ex = AudioFractionToPixel(e);
             if (ex > sx)
             {
-                // Clamp to visible bounds
                 sx = Math.Max(0, sx);
                 ex = Math.Min(bounds.Width, ex);
                 context.FillRectangle(
                     new SolidColorBrush(Color.FromArgb(60, 100, 150, 255)),
                     new Rect(sx, 0, ex - sx, bounds.Height));
+
+                // Duration label below selection
+                if (TotalDurationSeconds > 0)
+                {
+                    double selDuration = (e - s) * TotalDurationSeconds;
+                    string label = selDuration >= 1.0 ? $"{selDuration:F1}s" : $"{selDuration * 1000:F0}ms";
+                    var labelText = new FormattedText(label,
+                        System.Globalization.CultureInfo.CurrentCulture,
+                        FlowDirection.LeftToRight,
+                        new Typeface("Inter", FontStyle.Normal, FontWeight.Normal),
+                        11, new SolidColorBrush(Color.FromRgb(180, 210, 255)));
+                    double labelX = (sx + ex) / 2 - labelText.Width / 2;
+                    labelX = Math.Clamp(labelX, 2, bounds.Width - labelText.Width - 2);
+                    context.DrawText(labelText, new Point(labelX, bounds.Height - labelText.Height - 3));
+                }
             }
         }
 
@@ -445,6 +468,21 @@ public class WaveformControl : Control
             // Right marker (cyan)
             var rightPen = new Pen(new SolidColorBrush(Color.FromRgb(50, 220, 255)), 2);
             context.DrawLine(rightPen, new Point(rightX, 0), new Point(rightX, bounds.Height));
+
+            // Trim duration label
+            if (TotalDurationSeconds > 0)
+            {
+                double trimDuration = (TrimRight - TrimLeft) * TotalDurationSeconds;
+                string trimLabel = trimDuration >= 1.0 ? $"{trimDuration:F1}s" : $"{trimDuration * 1000:F0}ms";
+                var trimLabelText = new FormattedText(trimLabel,
+                    System.Globalization.CultureInfo.CurrentCulture,
+                    FlowDirection.LeftToRight,
+                    new Typeface("Inter", FontStyle.Normal, FontWeight.Normal),
+                    11, new SolidColorBrush(Color.FromRgb(180, 255, 220)));
+                double trimLabelX = (leftX + rightX) / 2 - trimLabelText.Width / 2;
+                trimLabelX = Math.Clamp(trimLabelX, 2, bounds.Width - trimLabelText.Width - 2);
+                context.DrawText(trimLabelText, new Point(trimLabelX, bounds.Height - trimLabelText.Height - 3));
+            }
 
             // Hint text
             var hint = new FormattedText("Trim: drag markers, Enter confirm, Esc cancel",
