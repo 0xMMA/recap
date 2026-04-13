@@ -1,0 +1,28 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="Recap.Desktop.Views.TranscriptWindow"
+        Title="Transcript" Width="600" Height="500"
+        WindowStartupLocation="CenterOwner">
+
+    <DockPanel Margin="8">
+        <!-- Bottom button bar -->
+        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal"
+                    HorizontalAlignment="Right" Spacing="8" Margin="0,8,0,0">
+            <Button Content="Copy" Click="Copy_Click" Width="80" />
+            <Button Content="Save .md" Click="SaveMd_Click" Width="80" />
+            <Button Content="Save .txt" Click="SaveTxt_Click" Width="80" />
+            <Button Content="Append" Click="Append_Click" Width="80" />
+            <Button Content="Close" Click="Close_Click" Width="80" />
+        </StackPanel>
+
+        <!-- Transcript text -->
+        <ScrollViewer>
+            <TextBox x:Name="TranscriptTextBox"
+                     IsReadOnly="True"
+                     AcceptsReturn="True"
+                     TextWrapping="Wrap"
+                     FontSize="14"
+                     Padding="8" />
+        </ScrollViewer>
+    </DockPanel>
+</Window>

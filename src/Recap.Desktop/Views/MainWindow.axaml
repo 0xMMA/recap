@@ -53,6 +53,9 @@
                 <Button Command="{Binding NewSessionCommand}"
                         ToolTip.Tip="New Session (N)"
                         Content="&#x2795;" Width="36" Height="36" FontSize="14" />
+                <Button x:Name="SettingsButton"
+                        ToolTip.Tip="Settings (Ctrl+,)"
+                        Content="&#x2699;" Width="36" Height="36" FontSize="16" />
             </StackPanel>
         </Border>
 
