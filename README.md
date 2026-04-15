@@ -4,6 +4,9 @@ Single-purpose voice capture tool for DM session recaps. Record spoken recaps in
 
 Like Audacity, but brutally scope-limited to what you actually need.
 
+<img width="1187" height="537" alt="image" src="https://github.com/user-attachments/assets/77b991fe-4029-42b0-8e92-a6e3069c1365" />
+
+
 ## Install
 
 1. Download `Recap-win-Portable.zip` from [Releases](https://github.com/0xMMA/recap/releases)
